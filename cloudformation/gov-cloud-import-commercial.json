@@ -1,0 +1,725 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "gov-cloud-import CloudFormation Template for Commercial",
+    "Parameters" : {
+
+      "SSHLocation" : {
+        "Description" : " The IP address range that can be used to SSH to the EC2 instances",
+        "Type": "String",
+        "MinLength": "9",
+        "MaxLength": "18",
+        "Default": "0.0.0.0/0",
+        "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+        "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+      }
+    },
+    "Mappings" : {
+      "RegionMap" : {
+        "us-east-2"      : { "bucket" : "<BUCKET_BASE>"},
+        "us-west-2"      : { "bucket" : "<BUCKET_BASE>"}
+      }
+    },
+    "Resources": {
+        "LambdaExecRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [ {
+                   "PolicyName": "gov-cloud-import-lambda",
+                   "PolicyDocument": {
+                      "Version" : "2012-10-17",
+                      "Statement": [ {
+                         "Effect": "Allow",
+                         "Action": [
+                             "cloudformation:DescribeStacks",
+                             "ec2:CopySnapshot",
+                             "ec2:DeregisterImage",
+                             "ec2:DeleteSnapshot",
+                             "ec2:DescribeInstances",
+                             "ec2:DescribeVolumes",
+                             "ec2:CreateSnapshot",
+                             "ec2:DescribeKeyPairs",
+                             "ec2:DescribeTags",
+                             "ec2:CreateTags",
+                             "ec2:RunInstances",
+                             "ec2:StartInstances",
+                             "ec2:CreateKeyPair",
+                             "ec2:CopyImage",
+                             "ec2:DescribeSnapshots",
+                             "ec2:CreateVolume",
+                             "ec2:DescribeImages",
+                             "ec2:DescribeSubnets",
+                             "logs:CreateLogStream",
+                             "iam:AddRoleToInstanceProfile",
+                             "iam:PassRole",
+                             "lambda:listFunctions",
+                             "lambda:invokeFunction",
+                             "logs:DescribeLogStreams",
+                             "logs:CreateLogGroup",
+                             "logs:PutLogEvents",
+                             "sns:Subscribe",
+                             "sns:Publish",
+                             "ssm:GetParameters",
+                             "ssm:GetParameter",
+                             "ssm:PutParameter",
+                             "states:StartExecution",
+                             "states:ListStateMachines",
+                             "sts:GetCallerIdentity",
+                             "s3:ListAllMyBuckets",
+                             "s3:HeadBucket",
+                             "s3:ListObjects"
+                         ],
+                         "Resource": "*"
+                      } ]
+                   }
+                } ]
+            }
+        },
+        "initStepFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/initStepFunction.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "importImageStatus": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/importImageStatus.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "moveStatus": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/moveStatus.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "cleanUp": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/cleanUp.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "ec2Run": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/ec2Run.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "makeVolume": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/makeVolume.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "removeS3Image": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/removeS3Image.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "moveImage": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/moveImage.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "importImage": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/importImage.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "makeVolumeStatus": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/makeVolumeStatus.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "initS3Sync": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/initS3Sync.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "listGovBuckets": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/listGovBuckets.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "listComBuckets": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/listComBuckets.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "appStatus": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/appStatus.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "snsSubscribe": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/snsSubscribe.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "snsPublish": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                  "S3Bucket": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "bucket"]},
+                  "S3Key": "lambda/snsPublish.zip"
+                },
+                "Runtime": "nodejs6.10",
+                "Timeout": "120"
+            }
+        },
+        "ec2s3Copy" :{
+          "Type": "AWS::StepFunctions::Activity",
+          "Properties": {
+             "Name": "ec2s3Copy"
+           }
+        },
+        "s3s3Sync" :{
+          "Type": "AWS::StepFunctions::Activity",
+          "Properties": {
+             "Name": "s3s3Sync"
+           }
+        },
+        "StatesExecRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    {
+                                        "Fn::Sub": "states.${AWS::Region}.amazonaws.com"
+                                    }
+                                ]
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "StatesExecutionPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "lambda:InvokeFunction"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "ImageStateMachine": {
+            "Type": "AWS::StepFunctions::StateMachine",
+            "Properties": {
+                "DefinitionString": {
+                    "Fn::Sub": [
+                        "{\n  \"Comment\": \"A state machine that launches an AMI, stops it, detaches volume, and terminates.\",\n  \"StartAt\": \"EC2 Prep\",\n  \"States\": {\n    \"EC2 Prep\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${ec2Run}\",\n      \"Next\": \"Move Image\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.ec2\"\n    },\n    \"Move Image\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${moveImage}\",\n      \"Next\": \"Wait Move\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.imageNew\"\n    },\n    \"Wait Move\": {\n      \"Type\": \"Wait\",\n      \"SecondsPath\": \"$.waitMove\",\n      \"Next\": \"Move Image Status\"\n    },\n    \"Move Image Status\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${moveStatus}\",\n      \"Next\": \"Move Complete?\",\n      \"ResultPath\": \"$.status\"\n    },\n    \"Move Complete?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.status\",\n          \"StringEquals\": \"failed\",\n          \"Next\": \"Move Failed\"\n        },\n        {\n          \"Variable\": \"$.status\",\n          \"StringEquals\": \"pending\",\n          \"Next\": \"Wait Move\"\n        },\n        {\n          \"Variable\": \"$.status\",\n          \"StringEquals\": \"available\",\n          \"Next\": \"Make Volume\"\n        }\n      ],\n      \"Default\": \"Move Failed\"\n    },\n    \"Make Volume\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${makeVolume}\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.volumeId\",\n      \"Next\": \"Make Volume Status\"\n    },\n    \"Wait Volume\": {\n      \"Type\": \"Wait\",\n      \"SecondsPath\": \"$.waitVol\",\n      \"Next\": \"Make Volume Status\"\n    },\n    \"Make Volume Status\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${makeVolumeStatus}\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.volume\",\n      \"Next\": \"Volume Ready?\"\n    },\n    \"Volume Ready?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.volume.status\",\n          \"StringEquals\": \"failed\",\n          \"Next\": \"Volume Failed\"\n        },\n        {\n          \"Variable\": \"$.volume.status\",\n          \"StringEquals\": \"creating\",\n          \"Next\": \"Wait Volume\"\n        },\n        {\n          \"Variable\": \"$.volume.status\",\n          \"StringEquals\": \"available\",\n          \"Next\": \"Instance Status\"\n        }\n      ],\n      \"Default\": \"Volume Failed\"\n    },\n    \"Wait Instance\": {\n      \"Type\": \"Wait\",\n      \"SecondsPath\": \"$.waitEc2\",\n      \"Next\": \"Instance Status\"\n    },\n    \"Instance Status\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${ec2Run}\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.status\",\n      \"Next\": \"EC2 Ready?\"\n    },\n    \"EC2 Ready?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.status\",\n          \"StringEquals\": \"stopped\",\n          \"Next\": \"EC2 Failed\"\n        },\n        {\n          \"Variable\": \"$.status\",\n          \"StringEquals\": \"pending\",\n          \"Next\": \"Wait Instance\"\n        },\n        {\n          \"Variable\": \"$.status\",\n          \"StringEquals\": \"running\",\n          \"Next\": \"Clean Up\"\n        }\n      ],\n      \"Default\": \"EC2 Failed\"\n    },\n    \"Clean Up\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${cleanUp}\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.cleanUp\",\n      \"Next\": \"S3 Copy Status\"\n    },\n    \"Wait S3 Copy\": {\n      \"Type\": \"Wait\",\n      \"SecondsPath\": \"$.waitMove\",\n      \"Next\": \"S3 Copy Status\"\n    },\n    \"S3 Copy Status\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${ec2s3Copy}\",\n      \"TimeoutSeconds\": 7200,\n      \"HeartbeatSeconds\": 300,\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.s3Status\",\n      \"Next\": \"S3 Copy Finish?\"\n    },\n    \"S3 Copy Finish?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.s3Status\",\n          \"StringEquals\": \"failed\",\n          \"Next\": \"S3 Failed\"\n        },\n        {\n          \"Variable\": \"$.s3Status\",\n          \"StringEquals\": \"transfering\",\n          \"Next\": \"Wait S3 Copy\"\n        },\n        {\n          \"Variable\": \"$.s3Status\",\n          \"BooleanEquals\": true,\n          \"Next\": \"Import Image\"\n        }\n      ],\n      \"Default\": \"S3 Failed\"\n    },\n    \"Import Image\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${importImage}\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.importTaskId\",\n      \"Next\": \"Import Task ID?\"\n    },\n    \"Import Task ID?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.importTaskId\",\n          \"StringEquals\": \"failed\",\n          \"Next\": \"Import Image Failed\"\n        },\n        {\n          \"Variable\": \"$.importTaskId\",\n          \"StringGreaterThan\": \"import-ami-\",\n          \"Next\": \"Wait Import Image\"\n        }\n      ],\n      \"Default\": \"Import Image Failed\"\n    },\n    \"Wait Import Image\": {\n      \"Type\": \"Wait\",\n      \"SecondsPath\": \"$.waitMove\",\n      \"Next\": \"Import Image Status\"\n    },\n    \"Import Image Status\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${importImageStatus}\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.importImageStatus\",\n      \"Next\": \"Import Image Finish?\"\n    },\n    \"Import Image Finish?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.importImageStatus\",\n          \"StringEquals\": \"failed\",\n          \"Next\": \"Import Image Failed\"\n        },\n        {\n          \"Variable\": \"$.importImageStatus\",\n          \"StringEquals\": \"active\",\n          \"Next\": \"Wait Import Image\"\n        },\n        {\n          \"Variable\": \"$.importImageStatus\",\n          \"StringEquals\": \"completed\",\n          \"Next\": \"Remove S3 Image\"\n        }\n      ],\n      \"Default\": \"Import Image Failed\"\n    },\n    \"Remove S3 Image\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${removeS3Image}\",\n      \"InputPath\": \"$\",\n      \"Next\": \"SuccessState\"\n    },\n    \"SuccessState\": {\n      \"Type\": \"Succeed\"\n    },\n    \"Move Failed\": {\n      \"Type\": \"Fail\",\n      \"Cause\": \"AWS Batch Job Failed\",\n      \"Error\": \"Move AMI returned FAILED\"\n    },\n    \"Volume Failed\": {\n      \"Type\": \"Fail\",\n      \"Cause\": \"AWS Batch Job Failed\",\n      \"Error\": \"Make Volume returned FAILED\"\n    },\n    \"EC2 Failed\": {\n      \"Type\": \"Fail\",\n      \"Cause\": \"AWS Batch Job Failed\",\n      \"Error\": \"Launch EC2 worker for copying volume to GovCloud returned FAILED\"\n    },\n    \"S3 Failed\": {\n      \"Type\": \"Fail\",\n      \"Cause\": \"AWS Batch Job Failed\",\n      \"Error\": \"Volume copy to S3 GovCloud failed\"\n    },\n    \"Import Image Failed\": {\n      \"Type\": \"Fail\",\n      \"Cause\": \"AWS Batch Job Failed\",\n      \"Error\": \"Import Import from GovCloud S3 to GovCloud EC2 failed\"\n    }\n  }\n}",
+                        {
+                            "makeVolumeStatus": {
+                                "Fn::GetAtt": [
+                                    "makeVolumeStatus",
+                                    "Arn"
+                                ]
+                            },
+                            "cleanUp": {
+                                "Fn::GetAtt": [
+                                    "cleanUp",
+                                    "Arn"
+                                ]
+                            },
+                            "ec2Run": {
+                                "Fn::GetAtt": [
+                                    "ec2Run",
+                                    "Arn"
+                                ]
+                            },
+                            "importImage": {
+                                "Fn::GetAtt": [
+                                    "importImage",
+                                    "Arn"
+                                ]
+                            },
+                            "importImageStatus": {
+                                "Fn::GetAtt": [
+                                    "importImageStatus",
+                                    "Arn"
+                                ]
+                            },
+                            "initStepFunction": {
+                                "Fn::GetAtt": [
+                                    "initStepFunction",
+                                    "Arn"
+                                ]
+                            },
+                            "makeVolume": {
+                                "Fn::GetAtt": [
+                                    "makeVolume",
+                                    "Arn"
+                                ]
+                            },
+                            "removeS3Image": {
+                                "Fn::GetAtt": [
+                                    "removeS3Image",
+                                    "Arn"
+                                ]
+                            },
+                            "moveImage": {
+                                "Fn::GetAtt": [
+                                    "moveImage",
+                                    "Arn"
+                                ]
+                            },
+                            "moveStatus": {
+                                "Fn::GetAtt": [
+                                    "moveStatus",
+                                    "Arn"
+                                ]
+                            },
+                            "ec2s3Copy": {
+                                "Ref": "ec2s3Copy"
+                            }
+                        }
+                    ]
+                },
+                "RoleArn": {
+                    "Fn::GetAtt": [
+                        "StatesExecRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "s3SyncStateMachine": {
+            "Type": "AWS::StepFunctions::StateMachine",
+            "Properties": {
+                "DefinitionString": {
+                    "Fn::Sub": [
+                        "{\n  \"Comment\": \"A state machine that synchronizes a Commercial S3 Bucket with a GovCloud S3 Bucket.\",\n  \"StartAt\": \"EC2 Prep\",\n  \"States\": {\n    \"EC2 Prep\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${ec2Run}\",\n      \"Next\": \"EC2 Already Running?\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.ec2Status\"\n    },\n    \"EC2 Already Running?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.ec2Status\",\n          \"StringEquals\": \"stopped\",\n          \"Next\": \"EC2 Failed\"\n        },\n        {\n          \"Variable\": \"$.ec2Status\",\n          \"StringEquals\": \"pending\",\n          \"Next\": \"Wait Instance\"\n        },\n        {\n          \"Variable\": \"$.ec2Status\",\n          \"StringEquals\": \"running\",\n          \"Next\": \"S3 Sync\"\n        }\n      ],\n      \"Default\": \"EC2 Failed\"\n    },\n    \"Wait Instance\": {\n      \"Type\": \"Wait\",\n      \"SecondsPath\": \"$.waitEc2\",\n      \"Next\": \"Instance Status\"\n    },\n    \"Instance Status\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${ec2Run}\",\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.ec2Status\",\n      \"Next\": \"EC2 Ready?\"\n    },\n    \"EC2 Ready?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.ec2Status\",\n          \"StringEquals\": \"stopped\",\n          \"Next\": \"EC2 Failed\"\n        },\n        {\n          \"Variable\": \"$.ec2Status\",\n          \"StringEquals\": \"pending\",\n          \"Next\": \"Wait Instance\"\n        },\n        {\n          \"Variable\": \"$.ec2Status\",\n          \"StringEquals\": \"running\",\n          \"Next\": \"S3 Sync\"\n        }\n      ],\n      \"Default\": \"EC2 Failed\"\n    },\n    \"S3 Sync\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${s3s3Sync}\",\n      \"TimeoutSeconds\": 86400,\n      \"HeartbeatSeconds\": 300,\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$.s3Status\",\n      \"Next\": \"S3 Sync Finish?\"\n    },\n    \"S3 Sync Finish?\": {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n          \"Variable\": \"$.s3Status\",\n          \"StringEquals\": \"failed\",\n          \"Next\": \"Notify Failed\"\n        },\n        {\n          \"Variable\": \"$.s3Status\",\n          \"BooleanEquals\": true,\n          \"Next\": \"Notify Success\"\n        }\n      ],\n      \"Default\": \"Notify Failed\"\n    },\n    \"Notify Success\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${snsPublish}\",\n      \"InputPath\": \"$\",\n      \"Next\": \"SuccessState\"\n    },\n    \"SuccessState\": {\n      \"Type\": \"Succeed\"\n    },\n    \"Notify Failed\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${snsPublish}\",\n      \"InputPath\": \"$\",\n      \"Next\": \"S3 Failed\"\n    },\n    \"S3 Failed\": {\n      \"Type\": \"Fail\",\n      \"Cause\": \"Bucket Sync Failed.\",\n      \"Error\": \"Bucket Sync Failed.  Please see logs.\"\n    },\n    \"EC2 Failed\": {\n      \"Type\": \"Fail\",\n      \"Cause\": \"Launch EC2 Worker Failed\",\n      \"Error\": \"Please see why EC2 cloud not launch.\"\n    }\n  }\n}",
+                        {
+                            "initS3Sync": {
+                                "Fn::GetAtt": [
+                                    "initS3Sync",
+                                    "Arn"
+                                ]
+                            },
+                            "listGovBuckets": {
+                                "Fn::GetAtt": [
+                                    "listGovBuckets",
+                                    "Arn"
+                                ]
+                            },
+                            "ec2Run": {
+                                "Fn::GetAtt": [
+                                    "ec2Run",
+                                    "Arn"
+                                ]
+                            },
+                            "snsPublish": {
+                                "Fn::GetAtt": [
+                                    "snsPublish",
+                                    "Arn"
+                                ]
+                            },
+                            "s3s3Sync": {
+                                "Ref": "s3s3Sync"
+                            }
+                        }
+                    ]
+                },
+                "RoleArn": {
+                    "Fn::GetAtt": [
+                        "StatesExecRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+
+          "VPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+              "CidrBlock" : "10.0.0.0/24",
+              "Tags" : [ {"Key" : "gov-cloud-import", "Value" : "true" } ]
+            }
+          },
+
+          "Subnet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+              "VpcId" : { "Ref" : "VPC" },
+              "CidrBlock" : "10.0.0.0/24",
+              "MapPublicIpOnLaunch" : true,
+              "Tags" : [ {"Key" : "gov-cloud-import", "Value" : "true" } ]
+            }
+          },
+
+          "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+              "Tags" : [ {"Key" : "gov-cloud-import", "Value" : "true" } ]
+            }
+          },
+
+          "AttachGateway" : {
+             "Type" : "AWS::EC2::VPCGatewayAttachment",
+             "Properties" : {
+               "VpcId" : { "Ref" : "VPC" },
+               "InternetGatewayId" : { "Ref" : "InternetGateway" }
+             }
+          },
+
+          "RouteTable" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+              "VpcId" : {"Ref" : "VPC"},
+              "Tags" : [ {"Key" : "gov-cloud-import", "Value" : "true" } ]
+            }
+          },
+
+          "Route" : {
+            "Type" : "AWS::EC2::Route",
+            "DependsOn" : "AttachGateway",
+            "Properties" : {
+              "RouteTableId" : { "Ref" : "RouteTable" },
+              "DestinationCidrBlock" : "0.0.0.0/0",
+              "GatewayId" : { "Ref" : "InternetGateway" }
+            }
+          },
+
+          "SubnetRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+              "SubnetId" : { "Ref" : "Subnet" },
+              "RouteTableId" : { "Ref" : "RouteTable" }
+            }
+          },
+
+          "InstanceSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+              "VpcId" : { "Ref" : "VPC" },
+              "GroupDescription" : "No access permitted.",
+              "Tags" : [ {"Key" : "gov-cloud-import", "Value" : "true" } ]
+            }
+          },
+
+          "ec2role": {
+              "Type": "AWS::IAM::Role",
+              "Properties": {
+                  "AssumeRolePolicyDocument": {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                          {
+                              "Effect": "Allow",
+                              "Principal": {
+                                  "Service": [
+                                      "ec2.amazonaws.com"
+                                  ]
+                              },
+                              "Action": [
+                                  "sts:AssumeRole"
+                              ]
+                          }
+                      ]
+                  },
+                  "Path": "/"
+              }
+          },
+          "ec2Policies": {
+              "Type": "AWS::IAM::Policy",
+              "Properties": {
+                  "PolicyName": "gov-cloud-import-ec2-policy",
+                  "PolicyDocument": {
+                      "Version": "2012-10-17",
+                      "Statement": {
+                          "Effect": "Allow",
+                          "Action": [
+                              "ec2:AttachVolume",
+                              "ec2:DetachVolume",
+                              "ec2:StopInstances",
+                              "ec2:DeleteVolume",
+                              "ec2:DescribeInstanceAttribute",
+                              "ec2:DescribeInstances",
+                              "logs:DescribeLogStreams",
+                              "ssm:GetParameters",
+                              "ssm:GetParameter",
+                              "logs:CreateLogGroup",
+                              "logs:PutLogEvents",
+                              "logs:CreateLogStream",
+                              "states:SendTaskSuccess",
+                              "states:SendTaskFailure",
+                              "states:SendTaskHeartbeat",
+                              "states:GetActivityTask",
+                              "sts:GetCallerIdentity"
+                          ],
+                          "Resource": "*"
+                      }
+                  },
+                  "Roles": [
+                      {
+                          "Ref": "ec2role"
+                      }
+                  ]
+              }
+          },
+          "ec2Profile": {
+              "Type": "AWS::IAM::InstanceProfile",
+              "Properties": {
+                  "Path": "/",
+                  "Roles": [
+                      {
+                          "Ref": "ec2role"
+                      }
+                  ]
+              }
+          },
+          "ec2RoleArn": {
+            "Type" : "AWS::SSM::Parameter",
+            "Properties" : {
+              "Name" : "gov-cloud-import-ec2RoleArn",
+              "Description" : "EC2 Role for gov-cloud-import-ec2",
+              "Type" : "String",
+              "Value" : { "Fn::GetAtt": [ "ec2Profile", "Arn" ] }
+            }
+          },
+          "SecurityGroup": {
+            "Type" : "AWS::SSM::Parameter",
+            "Properties" : {
+              "Name" : "gov-cloud-import-sg",
+              "Description" : "EC2 security group for gov-cloud-import-ec2",
+              "Type" : "String",
+              "Value" : { "Fn::GetAtt": [ "InstanceSecurityGroup", "GroupId" ] }
+            }
+          },
+          "ImageTopic" : {
+             "Type" : "AWS::SNS::Topic",
+             "Properties" : {
+                "TopicName" : "gov-cloud-import-image"
+             }
+          },
+          "S3Topic" : {
+             "Type" : "AWS::SNS::Topic",
+             "Properties" : {
+                "TopicName" : "gov-cloud-import-s3"
+             }
+          }
+      },
+}
