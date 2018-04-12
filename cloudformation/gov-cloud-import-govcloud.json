@@ -1,0 +1,147 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Deploys Resources for gov-cloud-import in GovCloud",
+
+  "Resources" : {
+    "User" : {
+      "Type" : "AWS::IAM::User",
+      "Properties" : {
+        "UserName" : "gov-cloud-import-user"
+      }
+    },
+    "UserPolicies" : {
+      "Type" : "AWS::IAM::Policy",
+      "Properties" : {
+        "PolicyName" : "gov-cloud-import-user-policy",
+        "PolicyDocument" : {
+          "Statement": [
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "s3:*"
+                  ],
+                  "Resource":  [
+                    {
+                      "Fn::Join": ["", ["arn:aws-us-gov:s3:::",{"Ref": "Bucket"}]]
+                    }
+                  ]
+              },
+              {
+                "Effect": "Allow",
+                  "Action": [
+                      "s3:*"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Join": ["", ["arn:aws-us-gov:s3:::",{"Ref": "Bucket"},"/*"]]
+                    }
+                  ]
+              },
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "cloudformation:DescribeStacks",
+                      "ec2:DescribeImportImageTasks",
+                      "ec2:ImportImage",
+                      "ec2:RegisterImage",
+                      "ec2:DescribeImportSnapshotTasks",
+                      "ec2:ImportSnapshot",
+                      "s3:ListAllMyBuckets",
+                      "s3:HeadBucket",
+                      "s3:ListObjects"
+                  ],
+                  "Resource": "*"
+              }
+          ]
+        },
+        "Users" : [ { "Ref" : "User" } ]
+      }
+    },
+    "Role" : {
+      "Type" : "AWS::IAM::Role",
+      "Properties" : {
+        "RoleName" : "vmimport",
+        "AssumeRolePolicyDocument" : {
+          "Version" : "2012-10-17",
+          "Statement" : [
+            {
+              "Effect" : "Allow",
+              "Principal" : {
+                "Service" : "vmie.amazonaws.com"
+              },
+              "Action" : "sts:AssumeRole",
+              "Condition" : {
+                "StringEquals" : {
+                  "sts:Externalid" : "vmimport"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "RolePolicies" : {
+      "Type" : "AWS::IAM::Policy",
+      "Properties" : {
+        "PolicyName" : "gov-cloud-vmimport-policy",
+        "PolicyDocument" : {
+          "Statement": [
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "s3:*"
+                  ],
+                  "Resource":  [
+                    {
+                      "Fn::Join": ["", ["arn:aws-us-gov:s3:::",{"Ref": "Bucket"}]]
+                    }
+                  ]
+              },
+              {
+                "Effect": "Allow",
+                  "Action": [
+                      "s3:*"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Join": ["", ["arn:aws-us-gov:s3:::",{"Ref": "Bucket"},"/*"]]
+                    }
+                  ]
+              },
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "ec2:ModifySnapshotAttribute",
+                      "ec2:CopySnapshot",
+                      "ec2:RegisterImage",
+                      "ec2:Describe*",
+                      "ec2:FullAccess"
+                  ],
+                  "Resource": "*"
+              }
+          ]
+        },
+        "Roles" : [ { "Ref" : "Role" } ]
+      }
+    },
+
+    "Bucket": {
+        "Type": "AWS::S3::Bucket",
+        "Properties": {
+            "AccessControl": "BucketOwnerFullControl"
+        }
+    }
+  },
+
+  "Outputs" : {
+    "NewUser" : {
+      "Value" : { "Ref" : "User" },
+      "Description" : "Id of new user"
+    },
+    "Bucket": {
+        "Value": { "Ref" : "Bucket" },
+        "Description": "S3 Bucket for Importing Images"
+    }
+  }
+}
