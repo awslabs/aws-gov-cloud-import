@@ -20,7 +20,7 @@ chmod +x gov-cloud-import-install.sh
 ![Install](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/gov-cloud-import-install.gif)
 
 <hr>
-## Usage: gov-cloud-import-image
+## Usage gov-cloud-import-image
 Browse to the URL output by the installation script.  You need keys that allow for lambda-invoke, lambda-list, and e2-describeRegions.  Browse to the API Key page, enter keys, and click validate.  Then click notifications if you like to add your email or phone(sms) alerts.
 
 For importing images, input an AMI or Snapshot ID.  The AMI or Snapshot must be owned by the account.  While the input field checks the format of the string, it does not check permissions.  Select the OS and Source/Destination Regions. Verify your input with a dialog box and import. You'll receive a State Machine Execution ARN to the import job.  Click to open in a new tab and watch process.
@@ -28,7 +28,7 @@ For importing images, input an AMI or Snapshot ID.  The AMI or Snapshot must be 
 ![Import Image](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/ImageImportFinal.gif)
 
 <hr>
-## Usage: gov-cloud-import-s3
+## Usage gov-cloud-import-s3
 For importing s3 buckets, you must give gov-cloud-import permissions to the source and destination bucket.  Please download the sample policy and modify to your needs.  Then click the link for Permissions and install your policy inline to the gov-cloud-import-ec2role.  Then click on the 2nd link for permissions and install your 2nd inline policy for user gov-cloud-import-user.
 
 Once permissions are set, proceed to the Import S3 page.  From first the drop down menu, select your source.  From the second drop down menu, select your destination.  Verify your input and submit.
@@ -36,7 +36,7 @@ Once permissions are set, proceed to the Import S3 page.  From first the drop do
 ![Import S3](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/ImportS3Final.gif)
 <hr>
 
-## Usage: gov-cloud-import and SDK
+## Usage gov-cloud-import and SDK
 If you like to build gov-cloud-import into your application, here are sample calls in Javascript that can be used with AWS SDK to start an import.  Be sure to find the correct FunctionName as cloudformation suffixes randoms characters.  These can be sent to us-west-2 or us-east-2 depending on which GovCloud Region (and adjacent Commercial Region) you have installed and will import images.
 
 For importing Images:
