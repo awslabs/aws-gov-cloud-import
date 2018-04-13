@@ -215,10 +215,10 @@ function getAmiWindows(paramsSSM){
 function constructMsg(paramsSSM){
     return new Promise((resolve, reject) => {
         if (paramsSSM.status == "completed"){
-            let msg = "gov-cloud-import-image: "+paramsSSM.image+" from Commercial is Completed as "+paramsSSM.govImageId+" in GovCloud";
+            let msg = JSON.stringify({"source": paramsSSM.image, "dest": paramsSSM.govImageId});
             resolve(msg);
         } else if (paramsSSM.status == "failed"){
-            let msg = "gov-cloud-import-image: "+paramsSSM.image+" from Commercial is Failed.  Please check Step Functions State Machine and logs.";
+            let msg = JSON.stringify({"source": paramsSSM.image, "dest": "failed"});
             resolve(msg);
         } else {
             resolve();
