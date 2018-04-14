@@ -119,4 +119,18 @@ function initSNSSubscribe(lambda){
             }
         });
     });
-}```
+}
+```
+
+Success or Failure response:
+```
+{
+  source: "ami-0123abdc", <--- Source Commercial AMI
+  dest: "ami-wxyz9876" <--- Destination GovCloud AMI
+} 
+or
+{
+  source: "ami-0123abdc", <--- Source Commercial AMI
+  dest: "failed" <--- Something went wrong, check the logs.
+}
+```
