@@ -215,10 +215,10 @@ function getAmiWindows(paramsSSM){
 function constructMsg(paramsSSM){
     return new Promise((resolve, reject) => {
         if (paramsSSM.status == "completed"){
-            let msg = JSON.stringify({"source": paramsSSM.image, "dest": paramsSSM.govImageId});
+let msg = JSON.stringify({"sourceRegion": paramsSSM.region, "source": paramsSSM.image, "destRegion": govRegion, "dest": paramsSSM.govImageId});
             resolve(msg);
         } else if (paramsSSM.status == "failed"){
-            let msg = JSON.stringify({"source": paramsSSM.image, "dest": "failed"});
+            let msg = JSON.stringify({"sourceRegion": paramsSSM.region, "source": paramsSSM.image, "destRegion": govRegion, "dest": "failed"});
             resolve(msg);
         } else {
             resolve();
