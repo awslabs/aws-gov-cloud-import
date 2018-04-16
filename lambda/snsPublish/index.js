@@ -20,7 +20,6 @@ let region = process.env.AWS_REGION;
 let govRegion;
 let msg;
 
-
 //Determine which GovCloud Region we should be using
 function getGovCloudRegion(){
     return new Promise(function(resolve, reject) {
@@ -63,6 +62,7 @@ function publish(msg, topic, arn) {
                 console.log(err);
                 reject(err);
             } else {
+                console.log(data);
                 resolve(data);
             }
         });
@@ -72,25 +72,26 @@ function publish(msg, topic, arn) {
 function constructMsg(event) {
     return new Promise((resolve, reject) => {
         if (event.topic == "gov-cloud-import-image"){
-            if (event.status == "completed"){
-                msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": event.govImageId});
+            if (event.importImageStatus == "completed"){
+                let msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": event.govImageId});
                 resolve(msg);
-            } else if (event.status == "failed"){
-                msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": "failed"});
+            } else if (event.importImageStatus == "failed"){
+                let msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": "failed"});
                 resolve(msg);
             }
         } else if (event.topic == "gov-cloud-import-s3"){
             if (event.s3Status == 'failed'){
-                msg = JSON.stringify({"sourceRegion": event.region, "source": event.sourceBucket, "destRegion": govRegion, "dest": "failed"});
+                let msg = JSON.stringify({"sourceRegion": event.region, "source": event.sourceBucket, "destRegion": govRegion, "dest": "failed"});
                 resolve(msg);
             } else if (event.s3Status == true ){
-                msg = JSON.stringify({"sourceRegion": event.region, "source": event.sourceBucket, "destRegion": govRegion, "dest": event.destBucket});
+                let msg = JSON.stringify({"sourceRegion": event.region, "source": event.sourceBucket, "destRegion": govRegion, "dest": event.destBucket});
                 resolve(msg);
             }
         }
     });
 }
 exports.handler = (event, context, callback) => {
+        console.log(event);
     getGovCloudRegion()
         .then(function(){
             return constructTopicArn(event.topic);
@@ -101,11 +102,11 @@ exports.handler = (event, context, callback) => {
             return constructMsg(event);
         })
         .then(function(msg){
-            
-            //Subscribe the endpoint
+            //Publish to SNS
+            console.log(msg);
             return publish(msg, event.topic, event.arn);
         })        
-        .then(function(msg){
+        .then(function(){
             callback(null, msg);
         })
         .catch(function(err){
