@@ -122,15 +122,20 @@ function initSNSSubscribe(lambda){
 }
 ```
 
-Success or Failure response:
+Success or Failure notifications:
 ```
 {
-  source: "ami-0123abdc", <--- Source Commercial AMI
-  dest: "ami-wxyz9876" <--- Destination GovCloud AMI
+  "sourceRegion": "us-west-2",
+  "source": "ami-0123abdc",
+  "destRegion": "us-gov-west-1",
+  "dest": "ami-wxyz9876" 
 } 
-or
+
 {
-  source: "ami-0123abdc", <--- Source Commercial AMI
-  dest: "failed" <--- Something went wrong, check the logs.
+  "sourceRegion": "us-west-2",
+  "source": "ami-0123abdc",
+  "destRegion": "us-gov-west-1",
+  "dest": "failed" 
 }
+
 ```
