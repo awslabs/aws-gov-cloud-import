@@ -14,9 +14,9 @@
 */
 
 const AWS = require('aws-sdk');
-const ssm = new AWS.SSM
+const ssm = new AWS.SSM;
 const lambda = new AWS.Lambda();
-
+let now = Date.now();
 let govRegion;
 let paramsSSM = {};
 let region = process.env.AWS_REGION;
@@ -103,7 +103,6 @@ function importStatusLinux(paramsSSM){
                 let status = data.ImportSnapshotTasks[0].SnapshotTaskDetail.Status;
                 if (status == "completed"){
                     paramsSSM.snapshotId = data.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId;
-                    console.log(paramsSSM+"Snapshot")
                     resolve(status);
                 }
                 resolve(status);
@@ -113,7 +112,7 @@ function importStatusLinux(paramsSSM){
 }
 
 //Find Lambda function
-function snsPublish(msg, topic){
+function snsPublish(event){
     return new Promise((resolve, reject) => {
         //Params for Lambda invoke
         let params = {};
@@ -132,7 +131,7 @@ function snsPublish(msg, topic){
                             FunctionName : str,
                             InvocationType : 'RequestResponse',
                             LogType : 'Tail',
-                            Payload : JSON.stringify({"msg": msg, "topic": topic})
+                            Payload : JSON.stringify(event)
                         };
                         //console.log(params)
                         // Call the Lambda function
@@ -162,7 +161,7 @@ function registerImage(paramsSSM){
             });
             let params = {
                 Architecture: 'x86_64',
-                Name: paramsSSM.image+' from Commercial',
+                Name: paramsSSM.image+' from Commercial '+now,
                 BlockDeviceMappings: [
                     {
                         DeviceName: '/dev/sda1',
@@ -189,61 +188,12 @@ function registerImage(paramsSSM){
     });
 }
 
-function getAmiWindows(paramsSSM){
-    return new Promise(function(resolve, reject) {
-        let ec2 = new AWS.EC2({
-            region: paramsSSM.govRegion,
-            accessKeyId: paramsSSM.accessKey,
-            secretAccessKey: paramsSSM.secretKey
-        });
-        var params = {
-              ImportTaskIds: [
-                paramsSSM.importTaskId
-              ],
-        };
-        ec2.describeImportImageTasks(params, function(err, data) {
-            if (err) {
-                console.log(err);
-                reject(err);
-            } else {
-                resolve(data.ImportImageTasks[0].ImageId);
-            }
-        });
-    });
-}
-
-function constructMsg(paramsSSM){
-    return new Promise((resolve, reject) => {
-        if (paramsSSM.status == "completed"){
-            let msg = JSON.stringify({"sourceRegion": paramsSSM.region, "source": paramsSSM.image, "destRegion": govRegion, "dest": paramsSSM.govImageId});
-            resolve(msg);
-        } else if (paramsSSM.status == "failed"){
-            let msg = JSON.stringify({"sourceRegion": paramsSSM.region, "source": paramsSSM.image, "destRegion": govRegion, "dest": "failed"});
-            resolve(msg);
-        } else {
-            resolve();
-        }
-    });
-}
-
 function getStatus(paramsSSM){
     return new Promise((resolve, reject) => {
         if (paramsSSM.os == "Windows"){
             resolve(importStatusWindows(paramsSSM));
         } else if (paramsSSM.os == "Linux"){
             resolve(importStatusLinux(paramsSSM));
-        } else {
-            resolve();
-        }
-    });
-}
-
-function getGovAmiId(paramsSSM){
-    return new Promise((resolve, reject) => {
-        if (paramsSSM.os == "Windows"){
-            resolve(getAmiWindows(paramsSSM));
-        } else if (paramsSSM.os == "Linux"){
-            resolve(registerImage(paramsSSM));
         } else {
             resolve();
         }
@@ -271,6 +221,7 @@ exports.handler = (event, context, callback) => {
         })
         .then(function(status){
             paramsSSM.status = status;
+            event.importImageStatus = status;
             //End the functions and send Step Functions back to waiting
             if (status == "active"){
                 callback(null, status);
@@ -279,10 +230,7 @@ exports.handler = (event, context, callback) => {
          })
         .then(function(govImageId){
             paramsSSM.govImageId = govImageId;
-            return constructMsg(paramsSSM);
-        })
-        .then(function(msg){
-            return snsPublish(msg, paramsSSM.topic);
+            return snsPublish(event);
         })
         .then(function(){
             callback(null, paramsSSM.status);
