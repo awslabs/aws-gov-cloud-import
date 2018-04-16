@@ -17,6 +17,22 @@ const AWS = require('aws-sdk');
 let sns = new AWS.SNS();
 let sts = new AWS.STS();
 let region = process.env.AWS_REGION;
+let govRegion;
+let msg;
+
+
+//Determine which GovCloud Region we should be using
+function getGovCloudRegion(){
+    return new Promise(function(resolve, reject) {
+        if (region == 'us-west-2') {
+            govRegion = 'us-gov-west-1';
+            resolve(govRegion);
+        } else if (region == 'us-east-2'){
+            govRegion = 'us-gov-west-1';
+            resolve(govRegion);
+        }
+    });
+}
 
 function constructTopicArn(topic) {
     return new Promise((resolve, reject) => {
@@ -53,21 +69,43 @@ function publish(msg, topic, arn) {
     });
 }
 
+function constructMsg(event) {
+    return new Promise((resolve, reject) => {
+        if (event.topic == "gov-cloud-import-image"){
+            if (event.status == "completed"){
+                msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": event.govImageId});
+                resolve(msg);
+            } else if (event.status == "failed"){
+                msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": "failed"});
+                resolve(msg);
+            }
+        } else if (event.topic == "gov-cloud-import-s3"){
+            if (event.s3Status == 'failed'){
+                msg = JSON.stringify({"sourceRegion": event.region, "source": event.sourceBucket, "destRegion": govRegion, "dest": "failed"});
+                resolve(msg);
+            } else if (event.s3Status == true ){
+                msg = JSON.stringify({"sourceRegion": event.region, "source": event.sourceBucket, "destRegion": govRegion, "dest": event.destBucket});
+                resolve(msg);
+            }
+        }
+    });
+}
 exports.handler = (event, context, callback) => {
-    //Parse for S3 Message
-    if (event.s3Status == 'failed'){
-        event.msg = event.topic+': Failed to copy from '+event.sourceBucket+' to '+event.destBucket+'.';
-    } else if (event.s3Status == true ){
-        event.msg = event.topic+': Successful copy from '+event.sourceBucket+' to '+event.destBucket+'.';
-    }
-    //Build SNS Topic Arn
-    constructTopicArn(event.topic)
+    getGovCloudRegion()
+        .then(function(){
+            return constructTopicArn(event.topic);
+        })
         .then(function(arn){
-            //Subscribe the endpoint
-            return publish(event.msg, event.topic, arn);
+            event.arn = arn;
+            //Create SNS Msg
+            return constructMsg(event);
         })
         .then(function(msg){
-            //console.log(msg);
+            
+            //Subscribe the endpoint
+            return publish(msg, event.topic, event.arn);
+        })        
+        .then(function(msg){
             callback(null, msg);
         })
         .catch(function(err){
