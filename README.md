@@ -3,7 +3,7 @@ AWS has multiple Identity partitions;  AWS Commercial, AWS GovCloud (US), and AW
 <br><br>
 With the tool GovCloud Import Tool, you have a web-based UI that allows you to import an AMI or Snapshot ID from Commercial to GovCloud (up to 100GiB). Within the same tool you can input of a Commercial S3 bucket and a GovCloud Destination Bucket and perform one way synchronizations(up to 1TiB).
 ![Overview Diagram](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/diagramOverview.png)
-
+ 
 <hr>
 
 ## Installation
