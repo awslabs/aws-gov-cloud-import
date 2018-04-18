@@ -2,7 +2,7 @@
 AWS has multiple Identity partitions;  AWS Commercial, AWS GovCloud (US), and AWS China. You can see these represented in their ARNs. Respectively; arn:aws, arn:us-gov, arn:cn. For security, services like Amazon Simple Storage Service (Amazon S3) do not have access to credentials beyond their boundary, which can make it difficult to transfer information from inside one Identity boundary to another.
 <br><br>
 With the tool GovCloud Import Tool, you have a web-based UI that allows you to import an AMI or Snapshot ID from Commercial to GovCloud (up to 100GiB). Within the same tool you can input of a Commercial S3 bucket and a GovCloud Destination Bucket and perform one way synchronizations(up to 1TiB).
-![Overview Diagram](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/overviewDiagram.png)
+![Overview Diagram](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/diagramOverview.png)
 
 <hr>
 
