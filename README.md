@@ -122,7 +122,7 @@ function initSNSSubscribe(lambda){
 }
 ```
 
-Success or Failure notifications:
+Success or Failure notifications for Images:
 ```
 {
   "sourceRegion": "us-west-2",
@@ -139,3 +139,29 @@ Success or Failure notifications:
 }
 
 ```
+
+Success or Failure notifications for S3:
+```
+{
+  "sourceRegion": "us-west-2",
+  "source": "my-aws-bucket",
+  "destRegion": "us-gov-west-1",
+  "dest": "my-govcloud-bucket" 
+} 
+
+{
+  "sourceRegion": "us-west-2",
+  "source": "my-aws-bucket",
+  "destRegion": "us-gov-west-1",
+  "dest": "failed" 
+}
+
+```
+## Scheduling S3 Synchronization
+With the use of scheduled CloudWatch events, you can trigger the initStepFuntion Lambda based on whatever schedule you need.  Take note, you want to make sure your schedule interval is greater than the time it takes to synchronize the bucket.  While it can run in parallel, it will decrease performance. Below shows an example input.
+
+```
+{"sourceBucket":"source-bucket", "destBucket":"destination bucket"}
+```
+
+![CloudWatch](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/cloudwatch.png)
