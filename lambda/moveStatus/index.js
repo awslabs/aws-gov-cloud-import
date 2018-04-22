@@ -64,25 +64,28 @@ function describeSnapshot(event){
 }
 
 exports.handler = (event, context, callback) => {
+    if (event.imageNew == 'failed'){
+        callback(null, "failed")
+    }
     //Describe and Relay back to Stepfunctions
     if (event.imageNew.startsWith("ami")){
         describeImage(event)
-           .then(function(state){
-             callback(null, state);
-          })
+            .then(function(state){
+                callback(null, state);
+            })
           .catch(function(err){
             console.log(err);
             callback(err);
           });
     } else if (event.imageNew.startsWith("snap")) {
         describeSnapshot(event)
-           .then(function(state){
-             callback(null, state);
-          })
-          .catch(function(err){
-            console.log(err);
-            callback(err);
-          });
+            .then(function(state){
+                callback(null, state);
+            })
+            .catch(function(err){
+                console.log(err);
+                callback(err);
+            });
     }
 
 };
