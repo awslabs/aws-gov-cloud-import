@@ -164,4 +164,4 @@ With the use of scheduled CloudWatch events, you can trigger the initStepFuntion
 {"sourceBucket":"source-bucket", "destBucket":"destination bucket"}
 ```
 
-![CloudWatch](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/cloudwatch.png)
+![CloudWatch](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/cloudwatchSchedule.png)
