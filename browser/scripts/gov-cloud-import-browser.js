@@ -244,73 +244,6 @@ function watchGovCloudFormation(refreshIdGov, govCloudFormation, config){
     });
 }
 
-//Find Import Image Step function
-function findInitStepFunction(lambda){
-    return new Promise((resolve, reject) => {
-        //Params for Lambda invoke
-        let params = {};
-        // Call the Lambda function
-        lambda.listFunctions(params, function(err, data) {
-            if (err) {
-                console.log(err);
-            } else {
-                let length = data.Functions.length;
-                for (let index = 0; index < length; ++index) {
-                    let str = data.Functions[index].FunctionName;
-                    if(str.startsWith("gov-cloud-import-initStepFunction")){
-                       resolve(str);
-                    }
-                }
-            }
-        });
-    });
-}
-
-//Find S3 Sync step function
-function findS3SyncFunction(lambda){
-    return new Promise((resolve, reject) => {
-        //Params for Lambda invoke
-        let params = {};
-        // Call the Lambda function
-        lambda.listFunctions(params, function(err, data) {
-            if (err) {
-                console.log(err);
-            } else {
-                let length = data.Functions.length;
-                for (let index = 0; index < length; ++index) {
-                    let str = data.Functions[index].FunctionName;
-                    if(str.startsWith("gov-cloud-import-initS3Sync")){
-                       resolve(str);
-                    }
-                }
-            }
-        });
-    });
-}
-
-//Find Status function
-function findStatusFunction(lambda){
-    return new Promise((resolve, reject) => {
-        //Params for Lambda invoke
-        let params = {};
-        // Call the Lambda function
-        lambda.listFunctions(params, function(err, data) {
-            if (err) {
-                resolve(err.message);
-            } else {
-                let length = data.Functions.length;
-                for (let index = 0; index < length; ++index) {
-                    let str = data.Functions[index].FunctionName;
-                    if(str.startsWith("gov-cloud-import-appStatus")){
-                        resolve(str);
-                    }
-                }
-                resolve("Not Installed");
-            }
-        });
-    });
-}
-
 //Find Status function
 function findLambdaFunction(lambda, lambdaName){
     return new Promise((resolve, reject) => {
@@ -329,73 +262,6 @@ function findLambdaFunction(lambda, lambdaName){
                     }
                 }
                 resolve("Not Installed");
-            }
-        });
-    });
-}
-
-//Find Uninstall function
-function findUninstallFunction(lambda){
-    return new Promise((resolve, reject) => {
-        //Params for Lambda invoke
-        let params = {};
-        // Call the Lambda function
-        lambda.listFunctions(params, function(err, data) {
-            if (err) {
-                resolve(err.message);
-            } else {
-                let length = data.Functions.length;
-                for (let index = 0; index < length; ++index) {
-                    let str = data.Functions[index].FunctionName;
-                    if(str.startsWith("gov-cloud-import-uninstall")){
-                        resolve(str);
-                    }
-                }
-            }
-        });
-    });
-}
-
-
-//Find function
-function findGovCloudS3lambda(lambda){
-    return new Promise((resolve, reject) => {
-        //Params for Lambda invoke
-        let params = {};
-        // Call the Lambda function
-        lambda.listFunctions(params, function(err, data) {
-            if (err) {
-                console.log(err);
-            } else {
-                let length = data.Functions.length;
-                for (let index = 0; index < length; ++index) {
-                    let str = data.Functions[index].FunctionName
-                    if(str.startsWith("gov-cloud-import-listGovBuckets")){
-                        resolve(str);
-                    }
-                }
-            }
-        });
-    });
-}
-
-//Find function
-function findComS3lambda(lambda){
-    return new Promise((resolve, reject) => {
-        //Params for Lambda invoke
-        let params = {};
-        // Call the Lambda function
-        lambda.listFunctions(params, function(err, data) {
-            if (err) {
-                console.log(err);
-            } else {
-                let length = data.Functions.length;
-                for (let index = 0; index < length; ++index) {
-                    let str = data.Functions[index].FunctionName
-                    if(str.startsWith("gov-cloud-import-listComBuckets")){
-                        resolve(str);
-                    }
-                }
             }
         });
     });
@@ -760,7 +626,7 @@ async function initWorkflow() {
         secretAccessKey: config.comSecret
     });
     //Volume ID, OS, & Source Region
-    let initStep = await findInitStepFunction(lambda);
+    let initStep = await findLambdaFunction(lambda, "initStepFunction");
     let initStepOutput = await initStepFunction(lambda, initStep);
 }
 
@@ -778,10 +644,9 @@ async function initS3SyncWorkflow() {
         secretAccessKey: config.comSecret
     });
     //Show Logging URL
-    console.log("config.comRegion")
     setS3LogURL(config.comRegion);
     //Volume ID, OS, & Source Region
-    let initStep = await findS3SyncFunction(lambda);
+    let initStep = await findLambdaFunction(lambda, "initS3Sync");
     let initStepOutput = await initS3StepFunction(lambda, initStep);
 }
 
@@ -794,7 +659,7 @@ async function setGovCloudBucketsForSync(){
         secretAccessKey: config.comSecret
     });
     //Volume ID, OS, & Source Region
-    let listBuckets = await findGovCloudS3lambda(lambda);
+    let listBuckets = await findLambdaFunction(lambda, "listGovBuckets");
     let destBuckets = await getBuckets(lambda, listBuckets);
     //update select Menu
     setSelect(JSON.parse(destBuckets), "govBucket")
@@ -811,7 +676,7 @@ async function setComBucketsForSync(){
         secretAccessKey: config.comSecret
     });
     //Volume ID, OS, & Source Region
-    let listBuckets = await findComS3lambda(lambda);
+    let listBuckets = await findLambdaFunction(lambda, "listComBuckets");
     let destBuckets = await getBuckets(lambda, listBuckets);
     //update select Menu
     setSelect(JSON.parse(destBuckets), "comBucket")
@@ -832,7 +697,7 @@ async function setRegionList(){
     //update select Menu
     setSelect(sourceRegions, "region")
 }
-
+/*
 async function setComBucketsForSync(){
     let config = await setRegionAndKeys();
     //AWS Config/Objects
@@ -847,7 +712,7 @@ async function setComBucketsForSync(){
     //update select Menu
     setSelect(JSON.parse(destBuckets), "comBucket")
 }
-
+*/
 async function refreshInstallStatusWest(){
     let config = await setRegionAndKeys();
     let lambda = new AWS.Lambda({
@@ -856,7 +721,7 @@ async function refreshInstallStatusWest(){
         secretAccessKey: config.comSecret
     });
     //Find Status of West
-    let appStatus = await findStatusFunction(lambda);
+    let appStatus = await findLambdaFunction(lambda, "snsSubscribe");
 
     if (appStatus == 'Not Installed'){
         document.getElementById("comWestCFStatus").innerHTML = appStatus;
@@ -909,7 +774,7 @@ async function refreshInstallStatusEast(){
         secretAccessKey: config.comSecret
     });
     //Find Status of East
-    let appStatus = await findStatusFunction(lambda);
+    let appStatus = await findLambdaFunction(lambda, "appStatus");
 
     if (appStatus == 'Not Installed'){
         document.getElementById("comEastCFStatus").innerHTML = appStatus;
