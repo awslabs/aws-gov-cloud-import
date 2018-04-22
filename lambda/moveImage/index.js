@@ -48,7 +48,7 @@ exports.handler = (event, context, callback) => {
         ec2.copyImage(params, function(err, data) {
             if (err) {
                 console.log(err);
-                callback(err);
+                callback(null, "failed");
             } else {
                 console.log(data);
                 callback(null, data.ImageId);
