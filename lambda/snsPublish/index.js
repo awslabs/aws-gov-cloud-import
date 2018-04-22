@@ -75,7 +75,7 @@ function constructMsg(event) {
             if (event.importImageStatus == "completed"){
                 let msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": event.govImageId});
                 resolve(msg);
-            } else if (event.importImageStatus == "failed"){
+            } else if (event.importImageStatus == "failed" || event.status == "failed" || event.volume.status == "failed" || event.s3Status == "failed" ){
                 let msg = JSON.stringify({"sourceRegion": event.region, "source": event.image, "destRegion": govRegion, "dest": "failed"});
                 resolve(msg);
             }
