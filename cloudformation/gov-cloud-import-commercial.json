@@ -493,6 +493,12 @@
                                     "Arn"
                                 ]
                             },
+                            "snsPublish": {
+                                "Fn::GetAtt": [
+                                    "snsPublish",
+                                    "Arn"
+                                ]
+                            },
                             "ec2s3Copy": {
                                 "Ref": "ec2s3Copy"
                             }
