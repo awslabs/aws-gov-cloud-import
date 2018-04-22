@@ -158,7 +158,7 @@ Success or Failure notifications for S3:
 
 ```
 ## Scheduling S3 Synchronization
-With the use of scheduled CloudWatch events, you can trigger the initStepFuntion Lambda based on whatever schedule you need.  Take note, you want to make sure your schedule interval is greater than the time it takes to synchronize the bucket.  While it can run in parallel, it will decrease performance. Below shows an example input.
+With the use of scheduled CloudWatch events rules, you can trigger the initStepFuntion Lambda based on whatever schedule you need.  Take note, you want to make sure your schedule interval is greater than the time it takes to synchronize the bucket.  While it can run in parallel, it will decrease performance. Below shows an example input.
 
 ```
 {"sourceBucket":"source-bucket", "destBucket":"destination bucket"}
