@@ -94,7 +94,8 @@ function deleteParameters(ssm){
                 'gov-cloud-import-s3Bucket',
                 'gov-cloud-import-secretKey',
                 'gov-cloud-import-accessKey',
-                'gov-cloud-import-ec2-'+region
+                'gov-cloud-import-ec2-'+region,
+                'gov-cloud-import-app'
             ]
         };
         ssm.deleteParameters(params, function(err, data) {
@@ -881,8 +882,8 @@ async function tearDownCom(){
         accessKeyId: config.comRemoveAccess,
         secretAccessKey: config.comRemoveSecret
     });
-    await terminateInst(ec2);
-    await removeCommercial(cloudformation);
+    terminateInst(ec2);
+    removeCommercial(cloudformation);
     deleteKeyPair(ec2, config.comRegion);
 }
 
