@@ -911,7 +911,4 @@ async function tearDownGov(){
         }
     }*/
     removeGovCloud(cloudformation);
-    let refreshIdGov = setInterval(function() {
-        let statusGov = watchGovCloudFormation(refreshIdGov, cloudformation, config);
-    }, 10000);
 }
