@@ -206,7 +206,7 @@ BUCKET_BASE_URL="https://s3.$COM_REGION.amazonaws.com/gov-cloud-import-$RAND"
 BUCKET_BASE="gov-cloud-import-$RAND"
 sed -ie "s|<BUCKET_BASE_URL>|$BUCKET_BASE_URL|g" ec2/gov-cloud-import-ec2prep.sh
 
-sed -ie "s|<BUCKET_BASE>|$BUCKET_BASE|g" cloudformation/gov-cloud-import-AWS.json
+sed -ie "s|<BUCKET_BASE>|$BUCKET_BASE|g" cloudformation/gov-cloud-import-commercial.json
 
 #Zip up lambda files
 echo "Compressing Lambda Functions"
