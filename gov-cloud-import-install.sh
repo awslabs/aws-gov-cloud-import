@@ -42,10 +42,10 @@ echo "Control-C to exit"
 echo ""
 echo "Please Enter **Admin** API Keys for Install:"
 echo ""
-read -p "Admin GovCloud Access Key: " GOV_ACCESS_KEY
-read -p "Admin GovCloud Secret Key: " GOV_SECRET_KEY
-read -p "Admin Commercial Access Key: " COM_ACCESS_KEY
-read -p "Admin Commercial Secret Key: " COM_SECRET_KEY
+read -p "Admin AWS GovCloud (US) Access Key: " GOV_ACCESS_KEY
+read -p "Admin AWS GovCloud (US) Secret Key: " GOV_SECRET_KEY
+read -p "Admin AWS Access Key: " COM_ACCESS_KEY
+read -p "Admin AWS Secret Key: " COM_SECRET_KEY
 clear
 cat << "EOF"
                             _                 _       _                            _   
@@ -206,7 +206,7 @@ BUCKET_BASE_URL="https://s3.$COM_REGION.amazonaws.com/gov-cloud-import-$RAND"
 BUCKET_BASE="gov-cloud-import-$RAND"
 sed -ie "s|<BUCKET_BASE_URL>|$BUCKET_BASE_URL|g" ec2/gov-cloud-import-ec2prep.sh
 
-sed -ie "s|<BUCKET_BASE>|$BUCKET_BASE|g" cloudformation/gov-cloud-import-commercial.json
+sed -ie "s|<BUCKET_BASE>|$BUCKET_BASE|g" cloudformation/gov-cloud-import-AWS.json
 
 #Zip up lambda files
 echo "Compressing Lambda Functions"
@@ -230,8 +230,8 @@ aws s3 sync ./ s3://gov-cloud-import-$RAND --profile com12345 --quiet
 
 echo "Deploying CloudFormations"
 #Start Cloudformation
-aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-commercial.json --capabilities CAPABILITY_IAM --profile com12345
-aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-govcloud.json --capabilities CAPABILITY_NAMED_IAM --profile gov12345
+aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-AWS.json --capabilities CAPABILITY_IAM --profile com12345
+aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-AWS GovCloud (US).json --capabilities CAPABILITY_NAMED_IAM --profile gov12345
 
 #Watch Formations
 echo ""
@@ -245,32 +245,32 @@ do
   GOV_STATUS=$(aws cloudformation describe-stacks --stack-name gov-cloud-import --profile gov12345 | awk 'NF>1{print $NF}' | head -n 1)
   NOW=$(date +%Y-%m-%d_%H:%M:%S)
   if [ $GOV_STATUS == "CREATE_IN_PROGRESS" ] || [ $COM_STATUS == "CREATE_IN_PROGRESS" ]; then
-    echo "$NOW GovCloud Status: $GOV_STATUS"
-    echo "$NOW Commercial Status: $COM_STATUS"
+    echo "$NOW AWS GovCloud (US) Status: $GOV_STATUS"
+    echo "$NOW AWS Status: $COM_STATUS"
   elif [ $GOV_STATUS == "ROLLBACK_IN_PROGRESS" ] && [ $COM_STATUS == "ROLLBACK_IN_PROGRESS" ]; then
     echo ""
     echo "Something went wrong with Cloudformation"
-    echo "$NOW GovCloud Status: $GOV_STATUS"
-    echo "$NOW Commercial Status: $COM_STATUS"
+    echo "$NOW AWS GovCloud (US) Status: $GOV_STATUS"
+    echo "$NOW AWS Status: $COM_STATUS"
     exit
   elif [ $GOV_STATUS == "CREATE_COMPLETE" ] && [ $COM_STATUS == "CREATE_COMPLETE" ]; then
-    echo "$NOW GovCloud Status: $GOV_STATUS"
-    echo "$NOW Commercial Status: $COM_STATUS"
+    echo "$NOW AWS GovCloud (US) Status: $GOV_STATUS"
+    echo "$NOW AWS Status: $COM_STATUS"
     break
   fi
   sleep 30
 done
 
 
-#Make GovCloud API Keys
+#Make AWS GovCloud (US) API Keys
 echo ""
-echo "Creating GovCloud Access Keys and Storing them in Commercial SSM Parameters."
+echo "Creating AWS GovCloud (US) Access Keys and Storing them in AWS SSM Parameters."
 CREATE_KEYS=$(aws iam create-access-key --user-name gov-cloud-import-user --profile gov12345)
 ACCESS_KEY=$(echo $CREATE_KEYS | awk '{print $2}')
 SECRET_KEY=$(echo $CREATE_KEYS | awk '{print $4}')
 GOV_BUCKET=$(aws cloudformation describe-stacks --stack-name gov-cloud-import --profile gov12345 | awk 'NF>1{print $NF}' | sed '3q;d')
 
-#Submit Parameters to commercial
+#Submit Parameters to AWS
 aws ssm put-parameter --name "gov-cloud-import-accessKey" --overwrite  --type "SecureString" --value $ACCESS_KEY --profile com12345 > /dev/null
 aws ssm put-parameter --name "gov-cloud-import-secretKey"  --overwrite --type "SecureString" --value $SECRET_KEY --profile com12345 > /dev/null
 aws ssm put-parameter --name "gov-cloud-import-s3Bucket" --overwrite  --type "String" --value $GOV_BUCKET --profile com12345 > /dev/null
