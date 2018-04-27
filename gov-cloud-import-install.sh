@@ -230,8 +230,8 @@ aws s3 sync ./ s3://gov-cloud-import-$RAND --profile com12345 --quiet
 
 echo "Deploying CloudFormations"
 #Start Cloudformation
-aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-AWS.json --capabilities CAPABILITY_IAM --profile com12345
-aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-AWS GovCloud (US).json --capabilities CAPABILITY_NAMED_IAM --profile gov12345
+aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-commerical.json --capabilities CAPABILITY_IAM --profile com12345
+aws cloudformation create-stack --stack-name gov-cloud-import --template-body file://cloudformation/gov-cloud-import-govcloud.json --capabilities CAPABILITY_NAMED_IAM --profile gov12345
 
 #Watch Formations
 echo ""
