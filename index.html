@@ -15,7 +15,7 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>GovCloud Import</title>
+	<title>AWS GovCloud (US) Import</title>
 	<link rel=icon href=./browser/favicon.ico>
 	<link rel="stylesheet" href="./browser/themes/amzn.min.css" />
 	<link rel="stylesheet" href="./browser/themes/jquery.mobile.icons.min.css" />
@@ -67,7 +67,7 @@
 		</div>
 		<div data-role="content" data-theme="a">
 			<h1>gov-cloud-import</h1>
-		    Usage: Import AMI/Snapshot or sync an S3 Bucket to a GovCloud S3 Bucket<br><br>
+		    Usage: Import AMI/Snapshot or sync an S3 Bucket to a AWS GovCloud (US) S3 Bucket<br><br>
 				Please start with the <a href="#importDocs">Import Image Docs</a> and proceed to the <a href="#account">API Keys</a>.
 		    <h1><img src="./browser/images/overviewDiagram.png" width="680"></h1>
 		    <br>
@@ -94,20 +94,20 @@
 			<br>
 			<h1>Install/Uninstall/Caveats</h1>
 			<h3>Install</h3>
-			Please verify: Any previous installs have been removed & vmimport role has been removed from GovCloud.<br>
+			Please verify: Any previous installs have been removed & vmimport role has been removed from AWS GovCloud (US).<br>
 			Launch a small ec2 instance and run this <a href="#">install script</a>.  Admin API Keys are needed for <br>
-			Commercial and GovCloud.  The script will output a URL for app UI. Please read through all documentation<br>
+			AWS and AWS GovCloud (US).  The script will output a URL for app UI. Please read through all documentation<br>
 			prior to installation.<br>
 
 			<h3>Uninstall</h3>
-			Please verify:  Any objects that are left in S3 GovCloud and Commercial Buckets are remved.  Once verified,<br>
-			proceed to the install/remove page.  You need Admin API Keys for Commercial and GovCloud.  All is removed but<br>
+			Please verify:  Any objects that are left in S3 AWS GovCloud (US) and AWS Buckets are removed.  Once verified,<br>
+			proceed to the install/remove page.  You need Admin API Keys for AWS and AWS GovCloud (US).  All is removed but<br>
 			the cloudwatch logs.
 
 			<!--<h3>Workflow</h3>
 			Once installed, the import image needs an AMI/Snapshot ID that belongs to the account.  The API keys<br>
-			used to import only need Lambda invoking privleges in commercial.  Next, Give the region inwhich the<br>
-			image is sourced. The GovCloud Region is the destination of the source AMI/Snapshot. Once Submitted,<br>
+			used to import only need Lambda invoking privleges in AWS.  Next, Give the region in which the<br>
+			image is sourced. The AWS GovCloud (US) Region is the destination of the source AMI/Snapshot. Once Submitted,<br>
 			the appwill return an error or the execution ARN for StepFunctions.  Watch the Step Function Exection<br>
 			in the AWS Console to view progress.-->
 			<h3>Caveats: </h3>
@@ -117,7 +117,7 @@
 				3. Window images loose .pem login functionality(not linux in tests).  Make sure creds set.<br>
 				4. No images over 100GiB(Tested up to this size).<br>
 				5. S3 Import is meant for 1TiB or less.
-				6. S3 Import fails without giving specific S3 Bucket permissions to Commercial role or GovCloud user.
+				6. S3 Import fails without giving specific S3 Bucket permissions to AWS role or AWS GovCloud (US) user.
 			</p>
 			<h3>Programatic Interface(API): </h3>
 			<p>
@@ -131,15 +131,15 @@
 			<h3>Cloudformation</h3>
 			<p>
 			<h4>Code:</h4>
-			<a href="./cloudformation/gov-cloud-import-commercial.json">Commercial Template</a><br>
-			<a href="./cloudformation/gov-cloud-import-govcloud.json">GovCloud Template</a><br>
+			<a href="./cloudformation/gov-cloud-import-AWS.json">AWS Template</a><br>
+			<a href="./cloudformation/gov-cloud-import-AWS GovCloud (US).json">AWS GovCloud (US) Template</a><br>
 			<h4>Overview</h4>
-			We have a CloudFormation for Commercial and GovCloud.  The installation script deploys these formations<br>
+			We have a CloudFormation for AWS and AWS GovCloud (US).  The installation script deploys these formations<br>
 			Below should help reference what is being built by the templates.<br><br>
-			For Commercial:<br><br>
-			<img src="./browser/images/commercial-resources.png" width="680"><br><br>
-			For GovCloud:<br><br>
-			<img src="./browser/images/govcloud-resources.png" width="680"><br><br>
+			For AWS:<br><br>
+			<img src="./browser/images/AWS-resources.png" width="680"><br><br>
+			For AWS GovCloud (US):<br><br>
+			<img src="./browser/images/AWS GovCloud (US)-resources.png" width="680"><br><br>
 			After depolyed, you then have the ability to transfer AMI/Snapshots via the import images and S3 buckets via Import S3.<br>
 			<br>
 			</p>
@@ -150,10 +150,10 @@
 			<p>1. User inputs Source OS, AMI/Snapshot ID, and Region</p>
 			<p>2. Lambda starts Step Functions and passes input</p>
 			<p>3. Step Functions starts/launches EC2 Worker</p>
-			<p>4. Lambda copies the Source Image to region adjacent to GovCloud</p>
+			<p>4. Lambda copies the Source Image to region adjacent to AWS GovCloud (US)</p>
 			<p>5. Makes Volume from copied Image and attach to EC2</p>
 			<p>6. Step Functions issues an EC2 Activity</p>
-			<p>7. EC2 Worker copies RAW image to GovCloud S3 Bucket</p>
+			<p>7. EC2 Worker copies RAW image to AWS GovCloud (US) S3 Bucket</p>
 			<p>8. Lambda uses EC2 VM Import/Export on Image</p>
 			<p>9. AMI ready to boot w/SNS notification</p>
 			<br>
@@ -161,17 +161,17 @@
 			<a href="./ec2/gov-cloud-import-install.js">Install(JS portion)</a><br>
 			<a href="./ec2/gov-cloud-import-install.sh">Install(Shell portion)</a><br>
 			<br>
-			<h3>Component: Commercial EC2 SSM</h3>
+			<h3>Component: AWS EC2 SSM</h3>
 			<p>
 			<h4>Overview</h4>
-			There is no script specific to SSM.  The unencrypted values are sent from the Commercial CloudFormation.  CloudFormation<br>
-			doesn't support storing encrypted outputs nor sending encrypted parameters to SSM.  Since we have GovCloud API Keys, its<br>
+			There is no script specific to SSM.  The unencrypted values are sent from the AWS CloudFormation.  CloudFormation<br>
+			doesn't support storing encrypted outputs nor sending encrypted parameters to SSM.  Since we have AWS GovCloud (US) API Keys, its<br>
 			important to mention this tool uses specific lambda functions store them encrypted.  The other key stored securely is the KeyPair<br>
 			for the EC2 Worker.  This is so if we need to troubleshoot, we have access(you'll also have to change Security Group).<br>
 			All values are deleted upon uninstall.<br>
 			<img src="./browser/images/ssm.png" width="680"><br><br>
 			</p>
-			<h3>Component: Commercial Step Functions</h3>
+			<h3>Component: AWS Step Functions</h3>
 			<img src='./browser/images/StepFunctionOverview.png' width="650">
 			<p>
 			<h4>Code:</h4>
@@ -179,10 +179,10 @@
 			<h4>Overview</h4>
 			The Step Functions drives the worflow of gov-cloud-import.  Kicked off via initStepFunction Lambda,<br>
 			Step Functions is passed the parameters from the browser.  Each step is either a Lambda Function,<br>
-			an EC2 Worker, or a wait event pending a status.  This script is encoded inside the commercial CloudFormation<br>
+			an EC2 Worker, or a wait event pending a status.  This script is encoded inside the AWS CloudFormation<br>
 			Template.
 			</p>
-			<h3>Component: Commercial Lambda</h3>
+			<h3>Component: AWS Lambda</h3>
 			<p>
 			<h4>Code:</h4>
 			<a href="./lambda/initStepFunction.zip">initStepFunction</a><br>
@@ -199,10 +199,10 @@
 			<a href="./lambda/snsSubscribe.zip">snsSubscribe</a><br>
 			<h4>Overview</h4>
 			Lambda performs tasks on the infrastructure necessary for the EC2 worker's copy.  It follows up with an API call<br>
-			to GovCloud for issuing an EC2 ImportImage call and watches the import status.  Upon completion, the last Lambda<br>
-			removes the RAW image from GovCloud S3.
+			to AWS GovCloud (US) for issuing an EC2 ImportImage call and watches the import status.  Upon completion, the last Lambda<br>
+			removes the RAW image from AWS GovCloud (US) S3.
 			</p>
-			<h3>Component: Commercial EC2 worker</h3>
+			<h3>Component: AWS EC2 worker</h3>
 			<p>
 			<h4>Code:</h4>
 			<a href="./ec2/gov-cloud-import.js">JS Script</a><br>
@@ -213,16 +213,16 @@
 			This will allow you to get into the instance if needed.  It deploys it into the VPC with an Egress only Security Group.<br>
 			Lambda checks its status again before issuing an Activity in StepFunctions.  The shell script bootstraps the image.<br>
 			Once running, it polls the StepFunction Activity.  An activity will have the volumeId(along with other params)<br>
-			It attaches the drive, copies to GovCloud S3 and sends heartbeats to StepFunction.  It can copy as many drives<br>
+			It attaches the drive, copies to AWS GovCloud (US) S3 and sends heartbeats to StepFunction.  It can copy as many drives<br>
 			as EC2 allows attached.  An instance size of m5.4xlarge is used.  2 hour after the last copy finishes, the EC2<br>
 			will stop itself until lambda starts it again.  When stopping, it detaches and deletes any orphaned volumes from<br>
 			failed attempts.<br>
 			</p>
-			<h3>Component: GovCloud VM Import/Export</h3>
+			<h3>Component: AWS GovCloud (US) VM Import/Export</h3>
 			<p>
 			<h4>Code:</h4>
 			<h4>Overview</h4>
-			VM Import is used on the RAW image transfered from the EC2 worker into GovCloud S3.  The requires a<br>
+			VM Import is used on the RAW image transfered from the EC2 worker into AWS GovCloud (US) S3.  The requires a<br>
 			an S3 Bucket and a role with proper permissions.  If successful, the RAW image transformed into AMI.<br>
 			<a href=""></a>
 			</p>
@@ -230,7 +230,7 @@
 			<p>This gov-cloud-import-image tool supports importing Snapshots/AMIs owned by your AWS account.<br><br></p>
 			<img src="./browser/images/diagramS3.png" width="580">
 			<br>
-			<p>1. User inputs Commercial Source Bucket and GovCloud Destination Bucket</p>
+			<p>1. User inputs AWS Source Bucket and AWS GovCloud (US) Destination Bucket</p>
 			<p>2. Lambda starts Step Functions and passes input</p>
 			<p>3. Step Functions starts/launches EC2 Worker</p>
 			<p>4. EC2 mounts Source Bucket via S3FS</p>
@@ -239,7 +239,7 @@
 			<p>7. Complete replica of source to destination.</p>
 			<p>8. AMI ready to boot w/SNS notification</p>
 			<br>
-			<h3>Component: Commercial Lambda</h3>
+			<h3>Component: AWS Lambda</h3>
 			<p>
 			<h4>Code:</h4>
 			<a href="./lambda/initS3Sync.zip">initS3Sync</a><br>
@@ -248,10 +248,10 @@
 			<a href="./lambda/snsSubscribe.zip">snsSubscribe</a><br>
 			<h4>Overview</h4>
 			Lambda performs tasks on the infrastructure necessary for the EC2 worker's copy.  It follows up with an API call<br>
-			to GovCloud for issuing an EC2 ImportImage call and watches the import status.  Upon completion, the last Lambda<br>
-			removes the RAW image from GovCloud S3.
+			to AWS GovCloud (US) for issuing an EC2 ImportImage call and watches the import status.  Upon completion, the last Lambda<br>
+			removes the RAW image from AWS GovCloud (US) S3.
 			</p>
-			<h3>Component: Commercial EC2 worker</h3>
+			<h3>Component: AWS EC2 worker</h3>
 			<p>
 			<h4>Code:</h4>
 			<a href="./ec2/gov-cloud-import.js">JS Script</a><br>
@@ -261,7 +261,7 @@
 			This is the same EC2 worker as gov-cloud-import-image. The asynchronus nature allows it handle multiple copies well.<br>
 			File Synchronization allows you to only copy the files you that have changed rather copying all files.  To do this<br>
 			we build a table prior to copying that allows us to know what to update.  gov-cloud-import-s3 will run a MD5 hash<br>
-			on the files in Commercial and compare them to the eTag of the Object(s) in GovCloud.  Commerical is mounted via<br>
+			on the files in AWS and compare them to the eTag of the Object(s) in AWS GovCloud (US).  Commerical is mounted via<br>
 			s3fs and access via the NodeJS fs.  AWS Logs produces Cloudwatch sync log showing when each file is started and<br>
 			finished copying along with filepaths.  The bucket is unmounted and mountpoint deleted upon completion.<br>
 			</p>
@@ -300,8 +300,8 @@
 		<div data-role="content" data-theme="a">
       <fieldset class="ui-grid-a">
         <div class="ui-block-a">
-          Commercial Access Key: <input type="text" id="comAccess" value="">
-          Commercial Secret Key: <input type="password" id="comSecret" value="">
+          AWS Access Key: <input type="text" id="comAccess" value="">
+          AWS Secret Key: <input type="password" id="comSecret" value="">
         </div>
       </fieldset>
       <fieldset class="ui-grid-a">
@@ -379,17 +379,17 @@
 			</fieldset>
 			<br>
 			<br>
-			<b>Uninstall:</b> Admins privleges needed.
+			<b>Uninstall:</b> Admins privileges needed.
 			<br>
 			<br>
 			<fieldset class="ui-grid-a">
 				<div class="ui-block-a">
-					GovCloud Access Key: <input type="text" id="govRemoveAccess" value="">
-					GovCloud Secret Key: <input type="password" id="govRemoveSecret" value="">
+					AWS GovCloud (US) Access Key: <input type="text" id="govRemoveAccess" value="">
+					AWS GovCloud (US) Secret Key: <input type="password" id="govRemoveSecret" value="">
 				</div>
 				<div class="ui-block-b">
-					Commercial Access Key: <input type="text" id="comRemoveAccess" value="">
-					Commercial Secret Key: <input type="password" id="comRemoveSecret" value="">
+					AWS Access Key: <input type="text" id="comRemoveAccess" value="">
+					AWS Secret Key: <input type="password" id="comRemoveSecret" value="">
 				</div>
 			</fieldset>
 			<fieldset class="ui-grid-c">
@@ -472,7 +472,7 @@
 						</select>
 					</div>
 					<div class="ui-block-b">
-						<label for="govRegion">GovCloud Region:</label>
+						<label for="govRegion">AWS GovCloud (US) Region:</label>
 						<select name="govRegion" id="govRegion" data-iconpos="left">
 								<option>Select</option>
 								<option value="us-gov-west-1">us-gov-west-1</option>
@@ -502,17 +502,17 @@
 					The Destination will be an exact replica of the Source when finished. <br><br>
 
 					<div class="ui-block-a">
-						Commercial: Give IAM user: <b>gov-cloud-import-ec2role</b> Bucket <a href="https://console.aws.amazon.com/iam/home#/roles" target="_blank">Permissions</a><br>
+						AWS: Give IAM user: <b>gov-cloud-import-ec2role</b> Bucket <a href="https://console.aws.amazon.com/iam/home#/roles" target="_blank">Permissions</a><br>
 						Sample Inline <a href="#comS3Policy" data-rel="dialog">Policy</a><br><br>
-						<label for="comBucket">Source Commercial Bucket:</label>
+						<label for="comBucket">Source AWS Bucket:</label>
 						<select name="comBucket" id="comBucket" data-iconpos="left">
 								<option>Select</option>
 						</select>
 					</div>
 					<div class="ui-block-b">
-						GovCloud: Give IAM role: <b>gov-cloud-import-user</b> Bucket <a href="https://console.amazonaws-us-gov.com/iam/home#/users/gov-cloud-import-user" target="_blank">Permissions</a><br>
+						AWS GovCloud (US): Give IAM role: <b>gov-cloud-import-user</b> Bucket <a href="https://console.amazonaws-us-gov.com/iam/home#/users/gov-cloud-import-user" target="_blank">Permissions</a><br>
 						Sample Inline <a href="#govS3Policy" data-rel="dialog">Policy</a><br><br>
-						<label for="govBucket">Destination GovCloud Bucket:</label>
+						<label for="govBucket">Destination AWS GovCloud (US) Bucket:</label>
 						<select name="govBucket" id="govBucket" data-iconpos="left">
 								<option>Select</option>
 						</select>
@@ -765,13 +765,13 @@
 		</div>
 	</div>
 	<!-- /Validate Notify Dialog -->
-	<!-- Sample S3 Policy Commercial Dialog -->
+	<!-- Sample S3 Policy AWS Dialog -->
 	<div data-role="page" data-theme="a" id="comS3Policy">
 		<div data-role="header" data-position="inline">
 			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a" class="a">
-			This is for Commercial IAM Role: <b>gov-cloud-import-ec2role</b>
+			This is for AWS IAM Role: <b>gov-cloud-import-ec2role</b>
 			<br>
 			<object width="600" height="300" data="./browser/gov-cloud-import-s3sync-com-bucket-policy.json"></object>
 
@@ -780,14 +780,14 @@
 			<h1><img src="./browser/images/govcloud.png" width="56"></h1>
 		</div>
 	</div>
-	<!-- /Sample S3 Policy Commercial Dialog -->
-	<!-- Sample S3 Policy Commercial Dialog -->
+	<!-- /Sample S3 Policy AWS Dialog -->
+	<!-- Sample S3 Policy AWS Dialog -->
 	<div data-role="page" data-theme="a" id="govS3Policy">
 		<div data-role="header" data-position="inline">
 			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a" class="a">
-			This is for GovCloud IAM User: <b>gov-cloud-import-user</b>
+			This is for AWS GovCloud (US) IAM User: <b>gov-cloud-import-user</b>
 			<br>
 			<object width="600" height="300" data="./browser/gov-cloud-import-s3sync-gov-bucket-policy.json"></object>
 
@@ -796,6 +796,6 @@
 			<h1><img src="./browser/images/govcloud.png" width="56"></h1>
 		</div>
 	</div>
-	<!-- /Sample S3 Policy Commercial Dialog -->
+	<!-- /Sample S3 Policy AWS Dialog -->
 </body>
 </html>
