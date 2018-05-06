@@ -80,7 +80,7 @@ log_group_name = /gov-cloud-import/s3Synclog
 ' >> /etc/awslogs/awslogs.conf
 #Replace the default with our app
 sed -i 's|file = /var/log/messages|file = /home/ec2-user/log|g' /etc/awslogs/awslogs.conf
-sed -i 's|/var/log/messages|EC2Worker|g' /etc/awslogs/awslogs.conf
+sed -i 's|/var/log/messages|/gov-cloud-import/EC2Worker|g' /etc/awslogs/awslogs.conf
 sed -i 's|log_group_name = /var/log/messages|log_group_name = /gov-cloud-import/ec2Worker|g' /etc/awslogs/awslogs.conf
 sed -i "s/us-east-1/$EC2_REGION/g" /etc/awslogs/awscli.conf
 #Start Service
