@@ -36,7 +36,7 @@ Once permissions are set, proceed to the Import S3 page.  From first the drop do
 ![Import S3](https://github.com/awslabs/aws-gov-cloud-import/raw/master/browser/images/ImportS3Final.gif)
 <hr>
 
-## Usage gov-cloud-import and SDK
+## Usage gov-cloud-import and AWS SDK
 If you like to build gov-cloud-import into your application, here are sample calls in Javascript that can be used with AWS SDK to start an import.  Be sure to find the correct FunctionName as cloudformation suffixes randoms characters.  These can be sent to us-west-2 or us-east-2 depending on which GovCloud Region (and adjacent Commercial Region) you have installed and will import images.
 
 For importing Images:
