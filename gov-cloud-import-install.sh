@@ -211,6 +211,7 @@ sed -ie "s|<BUCKET_BASE>|$BUCKET_BASE|g" cloudformation/gov-cloud-import-commerc
 #Zip up lambda files
 echo "Compressing Lambda Functions"
 echo ""
+chmod -R 755 lambda/
 cd lambda
 for i in `find . -type d | tail -n +2 | tr -d './'`
 do
