@@ -661,6 +661,7 @@
                               "ec2:AttachVolume",
                               "ec2:DetachVolume",
                               "ec2:StopInstances",
+                              "ec2:createTags",
                               "ec2:DeleteVolume",
                               "ec2:DescribeInstanceAttribute",
                               "ec2:DescribeInstances",
