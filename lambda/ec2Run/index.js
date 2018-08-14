@@ -210,7 +210,7 @@ function runInst(){
                     MaxCount: 1,
                     MinCount: 1,
                     ImageId: ami,
-                    InstanceType: "m5.4xlarge",
+                    InstanceType: "m5.large",
                     KeyName: keyName,
                     IamInstanceProfile: {
                         Arn: ec2param.arn,
