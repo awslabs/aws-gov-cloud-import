@@ -665,6 +665,7 @@
                               "ec2:DeleteVolume",
                               "ec2:DescribeInstanceAttribute",
                               "ec2:DescribeInstances",
+                              "ec2:terminateInstances",                              
                               "logs:DescribeLogStreams",
                               "ssm:GetParameters",
                               "ssm:GetParameter",
