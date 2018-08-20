@@ -39,10 +39,12 @@ let instanceId = httpGet("http://169.254.169.254/latest/meta-data/instance-id");
 let heartbeat = [];
 
 //Find the GovCloud region based on Instance Region
-if (region == 'us-west-2') {
-    let govRegion = 'us-gov-west-1';
-} else if (region == 'us-east-2'){
-    let govRegion = 'us-gov-west-1';
+function findGovRegion(){
+    if (region == 'us-west-2') {
+        return 'us-gov-west-1';
+    } else if (region == 'us-east-2'){
+        return 'us-gov-east-1';
+    }
 }
 
 //For Reading Mount Point and Writing Logs
@@ -56,16 +58,16 @@ const stepfunctions = new AWS.StepFunctions();
 
 //Setting Scripts Inital Timers
 let now = Date.now();
-let stopScriptTime = now + 7200000;
+let stopScriptTime = now + 1800000;
 
-//Reset timers for when to quit; 1 hour from last copy
-function setTime() {
+//Reset timers for when to quit; 5 mins from last copy
+function setTime(){
     now = Date.now();
-    stopScriptTime = now + 7200000;
+    stopScriptTime = now + 300000;
 }
 
 //Test if object is empty
-function isEmpty(obj) {
+function isEmpty(obj){
     for(let key in obj) {
         if(obj.hasOwnProperty(key))
             return false;
@@ -84,29 +86,38 @@ function formatBytes(a, b) {
 }
 
 //An app has got to log!
-function writeToLog(logInfo){
-    let d = new Date();
-    fs.appendFile('/home/ec2-user/log', d.toString()+" "+logInfo+"\n", function (err) {
-        if (err) throw err;
-    });
-}
-
-//An app has got to log!
-function writeToSyncLog(logInfo){
-    let d = new Date();
-    fs.appendFile('/home/ec2-user/s3SyncLog', d.toString()+" "+logInfo+"\n", function (err) {
-        if (err) throw err;
-    });
-}
-
-//An app has got to log!
-function writeToLog2(logInfo, logName){
+function writeToLog(logInfo, logName){
     let d = new Date();
     fs.appendFile('/home/ec2-user/'+logName, d.toString()+" "+logInfo+"\n", function (err) {
         if (err) throw err;
     });
 }
 
+//Change Instance Tag
+function changeInstanceTag(instanceId){
+    return new Promise((resolve, reject) => {
+        var params = {
+          Resources: [
+             instanceId
+          ],
+          Tags: [
+             {
+               Key: "gov-cloud-import",
+               Value: "false"
+             }
+          ]
+        };
+        ec2.createTags(params, function(err, data){
+            if (err) {
+                writeToLog(JSON.stringify(err), 'log');
+                reject(err);
+            } else {
+                writeToLog(JSON.stringify(data) + 'Tag changed to false.', 'log');
+                resolve(data);
+            }
+        });
+    });
+}
 
 //Timeout to allow for volume attach time
 const timeout = ms => new Promise(res => setTimeout(res, ms))
@@ -169,15 +180,16 @@ function attachVolume(taskData, instanceId){
         };
         ec2.attachVolume(paramsAttach, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
                 reject(err);
             } else {
-                writeToLog(JSON.stringify(data));
+                writeToLog(JSON.stringify(data), 'log');
                 resolve("success");
             }
         });
     });
 }
+
 //Detach Volume
 function detachVolume(volumeId){
     return new Promise((resolve, reject) => {
@@ -186,10 +198,10 @@ function detachVolume(volumeId){
         };
         ec2.detachVolume(params, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
                 reject(err);
             } else {
-                writeToLog(JSON.stringify(data));
+                writeToLog(JSON.stringify(data)), 'log';
                 return volumeId
             }
         });
@@ -203,9 +215,9 @@ function deleteVolume(volumeId){
     };
     ec2.deleteVolume(params, function(err, data) {
         if (err) {
-            writeToLog(JSON.stringify(err));
+            writeToLog(JSON.stringify(err), 'log');
         } else {
-            writeToLog(JSON.stringify(volumeId+" has been detached and deleted."));
+            writeToLog(JSON.stringify(volumeId+" has been detached and deleted."), 'log');
         }
     });
 
@@ -218,50 +230,19 @@ function removeVolume(volumeId){
   setTimeout(deleteVolume, 10000, volumeId);
 }
 
-//Remove Orphaned Volumes from Failed Tasks
-function orphanedVolumes(){
-    //Find the Root Vol to avoid error
-    fs.readFile('./rootVol', 'utf8', function(err, contents) {
-        let rootVol = contents.replace(/\r?\n|\r/g,'');
-        let paramsInst = {
-              Filters: [
-                { Name: 'tag:gov-cloud-import',
-                  Values: ['true']
-                },
-                { Name: 'instance-state-name',
-                  Values: ['running']
-                }
-            ]
-        };
-        //Get the list of attached volumes
-        ec2.describeInstances(paramsInst, function(err, data) {
-            if (err) {
-                writeToLog(err, err.stack); // an error occurred
-            } else {
-              let length = data.Reservations[0].Instances[0].BlockDeviceMappings.length;
-              for (let index = 0; index < length; ++index) {
-                  let drive = data.Reservations[0].Instances[0].BlockDeviceMappings[index].Ebs.VolumeId;
-                  writeToLog("Detaching orphan volume: "+drive);
-                  if (drive != rootVol){
-                      removeVolume(drive);
-                  }
-              }
-            }
-        });
-    });
-}
-
 //Remove from Heartbeat array
 function removeHeartbeat(array, element) {
     const index = array.indexOf(element);
     if (index !== -1) {
         array.splice(index, 1);
     }
-    writeToLog("Heartbeat removed");
+    writeToLog("Heartbeat removed"), 'log';
 }
 
 //Construct each Heartbeat
 function heartbeatFunc(taskToken){
+    //change tag so instance will not recieve new tasks.
+    changeInstanceTag(instanceId);
     let paramsHeartbeat = {
         taskToken: taskToken
     };
@@ -273,7 +254,7 @@ function heartbeatFunc(taskToken){
           }
       } else {
           //writeToLog(JSON.stringify(data));
-          writeToLog('Heartbeat Sent: '+taskToken);
+          writeToLog('Heartbeat Sent: '+taskToken, 'log');
       }
   });
 }
@@ -287,7 +268,7 @@ function sendHeartbeat(){
 }
 
 //Loop for Heartbeat(s), send every 3 mins.  Activity heartbeat timeout = 5 min.
-setInterval(function() {
+setInterval(function(){
     if(heartbeat.length > 0){
         sendHeartbeat();
         //Reset shutdown timer
@@ -304,7 +285,7 @@ function getParameter(value){
         };
         ssm.getParameter(params, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
                 reject(err);
             } else {
                 //Resolve with Parameter Value
@@ -314,37 +295,41 @@ function getParameter(value){
     });
 }
 
-//Stop Instance after 1 hour from last copy.  Also reset timer at start of copy.
-setInterval(function() {
+function terminateInstance(){
+    let instanceId = httpGet("http://169.254.169.254/latest/meta-data/instance-id");
+    let ec2Params = {
+        InstanceIds: [instanceId]
+    };
+    ec2.terminateInstances(ec2Params, function(err, data) {
+        if (err) {
+            writeToLog(JSON.stringify(err), 'log');
+        } else {
+            writeToLog(JSON.stringify(data), 'log');
+        }
+    });
+}
+
+//Terminate Instance after 5 min from copy finish.
+setInterval(function(){
     now = Date.now();
-    writeToLog(stopScriptTime+' Time at which to stop instance.');
+    writeToLog(stopScriptTime+' Time at which to terminate instance.', 'log');
     if (now > stopScriptTime){
         //Remove Connected, Orphaned Volumes before stopping instance
-        orphanedVolumes();
-        let instanceId = httpGet("http://169.254.169.254/latest/meta-data/instance-id");
-        let ec2Params = {
-            InstanceIds: [instanceId],
-            Force: true
-        };
-        ec2.stopInstances(ec2Params, function(err, data) {
-            if (err) {
-                writeToLog(JSON.stringify(err));
-            } else {
-                writeToLog(JSON.stringify(data));
-            }
-        });
+        //orphanedVolumes();
+        writeToLog("Terminating this instance...", 'log')
+        terminateInstance();
     }
 }, 65000);
 
 //Construct Activty ARN so we can find tasks
-function createActivityArn() {
+function createActivityArn(){
     return new Promise((resolve, reject) => {
         let callerParams = {
         };
         //Use STS to find the account number
         sts.getCallerIdentity(callerParams, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
                 reject(err);
             } else {
                 //Create Step Functions State Machine ARN
@@ -356,7 +341,7 @@ function createActivityArn() {
 }
 
 //Find Tasks to copy
-function findTask(activityArn) {
+function findTask(activityArn){
     return new Promise((resolve, reject) => {
         let params = {
             activityArn: activityArn,
@@ -371,8 +356,8 @@ function findTask(activityArn) {
                 		//Parse the results
                 		let obj = JSON.parse(data.input);
                     obj.taskToken = data.taskToken;
-                    writeToLog('***New Task***');
-                    writeToLog(JSON.stringify(obj));
+                    writeToLog('***New Task***', 'log');
+                    writeToLog(JSON.stringify(obj), 'log');
                 		resolve(obj);
                 }
             }
@@ -380,7 +365,7 @@ function findTask(activityArn) {
     });
 }
 
-function sendTaskFailure(taskToken) {
+function sendTaskFailure(taskToken){
     return new Promise((resolve, reject) => {
         let params = {
             taskToken: taskToken,
@@ -388,16 +373,16 @@ function sendTaskFailure(taskToken) {
         };
         stepfunctions.sendTaskFailure(params, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
             } else {
-                writeToLog(JSON.stringify('Sent Task Failure to StepFunctions'));
+                writeToLog(JSON.stringify('Sent Task Failure to StepFunctions'), 'log');
                 return(data);
             }
         });
     });
 }
 
-function sendTaskSuccess(taskToken) {
+function sendTaskSuccess(taskToken){
     return new Promise((resolve, reject) => {
         let params = {
             output: "true",
@@ -405,9 +390,9 @@ function sendTaskSuccess(taskToken) {
         };
         stepfunctions.sendTaskSuccess(params, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
             } else {
-                writeToLog(JSON.stringify('Sent Task Success to StepFunctions'));
+                writeToLog(JSON.stringify('Sent Task Success to StepFunctions'), 'log');
                 return(data);
             }
         });
@@ -420,7 +405,7 @@ function mountBucket(bucket){
       console.log(bucket);
         exec('./shell/mountBucket.sh -b '+ bucket, (err, stdout, stderr) => {
           if (stdout.startsWith("success")) {
-             writeToLog(stdout)
+             writeToLog(stdout, 'log')
              resolve("success");
           } else {
              resolve('fail');
@@ -443,14 +428,14 @@ function umountBucket(bucket){
 }
 
 //Construct S3 Sync Activty ARN
-function createS3ActivityArn() {
+function createS3ActivityArn(){
     return new Promise((resolve, reject) => {
         let callerParams = {
         };
         //Use STS to find the account number
         sts.getCallerIdentity(callerParams, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
                 reject(err);
             } else {
                 //Create Step Functions State Machine ARN
@@ -462,14 +447,14 @@ function createS3ActivityArn() {
 }
 
 //Find S3 Sync Tasks
-function findS3Task(s3activityArn) {
+function findS3Task(s3activityArn){
     return new Promise((resolve, reject) => {
         let params = {
             activityArn: s3activityArn,
         };
         stepfunctions.getActivityTask(params, function(err, data) {
             if (err) {
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err), 'log');
             } else {
                 if (isEmpty(data)){
                     reject(err);
@@ -477,8 +462,8 @@ function findS3Task(s3activityArn) {
                 		//Parse the results
                 		let obj = JSON.parse(data.input);
                     obj.taskToken = data.taskToken;
-                    writeToLog('***New S3 Sync Task***');
-                    writeToLog(JSON.stringify(obj));
+                    writeToLog('***New S3 Sync Task***', 'log');
+                    writeToLog(JSON.stringify(obj), 'log');
                 		resolve(obj);
                 }
             }
@@ -489,9 +474,10 @@ function findS3Task(s3activityArn) {
 //Copy connected volumne to GovCloud S3
 function copyVolume(taskData){
     return new Promise((resolve, reject) => {
+	      let govRegion = findGovRegion();
         //Set Object & Params for GovCloud S3 Upload
         let s3 = new AWS.S3({
-            region: 'us-gov-west-1',
+            region: govRegion,
             accessKeyId: taskData.accessKeyId,
             secretAccessKey: taskData.secretAccessKey
         });
@@ -501,7 +487,7 @@ function copyVolume(taskData){
         //Read Volume Mount point and set it as S3 boday
         let fileStream = fs.createReadStream(taskData.device);
         fileStream.on('error', function(err) {
-            writeToLog(JSON.stringify(err));
+            writeToLog(JSON.stringify(err), 'log');
         });
         uploadParams.Body = fileStream;
         //Set S3 Upload Options
@@ -512,24 +498,25 @@ function copyVolume(taskData){
                 removeHeartbeat(heartbeat, taskData.taskToken);
                 //Send a failure to Step Functions
                 sendTaskFailure(taskData.taskToken);
-                writeToLog(JSON.stringify(err));
+                writeToLog(JSON.stringify(err)), 'log';
                 removeVolume(taskData.volumeId);
                 reject(err);
             } if (data) {
                 removeHeartbeat(heartbeat, taskData.taskToken);
-                writeToLog(JSON.stringify(data));
+                writeToLog(JSON.stringify(data), 'log');
                 resolve(data);
             }
         }).on('httpUploadProgress', function(evt) {
             msg = taskData.volumeId+' Progress: '+formatBytes(evt.loaded)
-            writeToLog2(msg, "imageProgressLog");
+            writeToLog(msg, "imageProgressLog");
         });
     });
 }
 
 //Flow Control in order
-async function copyImage() {
+async function copyImage(){
     try {
+        //changeInstanceTag(instanceId);
         let activityArn = await createActivityArn();
         //findTask promise rejects when no tasks are present
         let taskData = await findTask(activityArn);
@@ -544,37 +531,31 @@ async function copyImage() {
         //Add to heartbeat array
         heartbeat.push(taskData.taskToken);
         //Copy the Volume to GovCloud S3
-
+	      changeInstanceTag(instanceId);
         await copyVolume(taskData);
-        //Reset shutdown timer
-        setTime();
         sendTaskSuccess(taskData.taskToken);
         removeVolume(taskData.volumeId);
     } catch(err){
         if (err){
-          writeToLog(err);
+          writeToLog(err, 'log');
         } else {
-          writeToLog('No New Image Import Tasks');
+          writeToLog('No New Image Import Tasks', 'log');
         }
     }
 };
 
-//Start Image Import Script
-copyImage();
-//Start new poll every 65 seconds, AWS Task long poll is 60 second timeout.
-setInterval(function() {
-    copyImage();
-}, 65000);
-
 async function syncS3(){
     try {
+        //changeInstanceTag(instanceId);
         let activityArn = await createS3ActivityArn();
         let taskData = await findS3Task(activityArn);
         let mounted = await mountBucket(taskData.sourceBucket);
         if (mounted == "success"){
+	          changeInstanceTag(instanceId);
             taskData.accessKeyId = await getParameter('gov-cloud-import-accessKey');
             taskData.secretAccessKey = await getParameter('gov-cloud-import-secretKey');
-            //Create S3 client object
+            let govRegion = findGovRegion()
+	          //Create S3 client object
             let client = s3.createClient({
               maxAsyncS3: 20,     // this is the default
               s3RetryCount: 3,    // this is the default
@@ -584,10 +565,9 @@ async function syncS3(){
               s3Options: {
                 accessKeyId: taskData.accessKeyId,
                 secretAccessKey: taskData.secretAccessKey,
-                region:"us-gov-west-1"
+                region: govRegion
               },
             });
-
             let params = {
               localDir: "/home/ec2-user/s3fs/" + taskData.sourceBucket,
               deleteRemoved: true,
@@ -607,40 +587,57 @@ async function syncS3(){
             });
             uploader.on('progress', function() {
                 let msg = "S3 Sync Progress: "+formatBytes(uploader.progressAmount)+" of "+formatBytes(uploader.progressTotal)
-                writeToLog2(msg, "syncProgressLog");
+                writeToLog(msg, "syncProgressLog");
             });
             uploader.on('fileUploadStart', function(localFilePath, s3Key) {
                 let filePath = localFilePath.replace("/home/ec2-user/s3fs/", "");
                 let msg = "Started copying From: s3://"+filePath+" To: s3://"+taskData.destBucket+'/'+s3Key
-                writeToLog2(msg, "s3SyncLog");
+                writeToLog(msg, "s3SyncLog");
             });
             uploader.on('fileUploadEnd', function(localFilePath, s3Key) {
                 let filePath = localFilePath.replace("/home/ec2-user/s3fs/", "");
                 let msg = "Finished copying From: s3://"+filePath+" To: s3://"+taskData.destBucket+'/'+s3Key
-                writeToLog2(msg, "s3SyncLog");
+                writeToLog(msg, "s3SyncLog");
             });
             uploader.on('end', function() {
                 let msg = "Destination: "+ taskData.destBucket +" has been synchronized with Source: "+ taskData.sourceBucket
-                writeToLog(msg);
+                writeToLog(msg, 'log');
                 sendTaskSuccess(taskData.taskToken);
                 removeHeartbeat(heartbeat, taskData.taskToken);
                 umountBucket(taskData.sourceBucket);
             });
         } else {
-          writeToLog("S3FS Commercial S3 Bucket failed to mount")
+          writeToLog("S3FS Commercial S3 Bucket failed to mount", 'log')
         }
-    } catch(err){
+    } catch (err){
         if (err){
-          writeToLog(err);
+          writeToLog(err, 'log');
         } else {
-          writeToLog('No New S3 Sync Tasks');
+          writeToLog('No New S3 Sync Tasks', 'log');
         }
     }
 }
 
 //Start S3 Sync Script
 syncS3();
+
 //Start new poll every 65 seconds, AWS Task long poll is 60 second timeout.
-setInterval(function() {
-    syncS3();
+let intervalIdS3 = setInterval(function(){
+    if (isEmpty(heartbeat)){
+        syncS3();
+    } else {
+      clearInterval(intervalIdS3);
+    }
+}, 65000);
+
+//Start Image Import Script
+copyImage();
+
+//Start new poll every 65 seconds, AWS Task long poll is 60 second timeout.
+let intervalIdImage = setInterval(function(){
+    if (isEmpty(heartbeat)){
+        copyImage();
+    } else {
+      clearInterval(intervalIdImage);
+    }
 }, 65000);
