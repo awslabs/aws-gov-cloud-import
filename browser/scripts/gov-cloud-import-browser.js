@@ -526,7 +526,7 @@ function validateLmabdaInvoke(lambda){
 function validateImageFormat(){
     let image = document.getElementById("image").value;
     //Regex for ami/snap formatting
-    if (/^ami\-[a-f0-9]{8}$|snap\-[a-f0-9]{17}$/.test(image)){
+    if (/^ami\-[a-f0-9]{8}$|ami\-[a-f0-9]{17}$|snap\-[a-f0-9]{17}$/.test(image)){
       console.log("valid image input")
     } else {
        $.mobile.changePage( "#noverify", { role: "dialog" } );
