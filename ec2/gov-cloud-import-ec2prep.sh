@@ -18,14 +18,14 @@ sudo yum update -y
 
 #Install scripts
 cd /home/ec2-user
-curl -O <BUCKET_BASE_URL>/ec2/gov-cloud-import.js
+aws s3 cp s3://<BUCKET_BASE>/ec2/gov-cloud-import.js ./
 curl --silent --location https://rpm.nodesource.com/setup_9.x | sudo bash -
 
 #Shell Scripts
 mkdir /home/ec2-user/shell
 cd /home/ec2-user/shell
-curl -O <BUCKET_BASE_URL>/ec2/umountBucket.sh
-curl -O <BUCKET_BASE_URL>/ec2/mountBucket.sh
+aws s3 cp s3://<BUCKET_BASE>/ec2/umountBucket.sh ./
+aws s3 cp s3://<BUCKET_BASE>/ec2/mountBucket.sh ./
 chmod +x *.sh
 cd /home/ec2-user/
 
@@ -33,7 +33,7 @@ cd /home/ec2-user/
 sudo yum install -y gcc libstdc++-devel gcc-c++ fuse fuse-devel curl-devel libxml2-devel mailcap automake openssl-devel git mlocate figlet awslogs nodejs
 
 #Install Nodejs modules
-sudo -H -u ec2-user bash -c 'npm install xmlhttprequest && npm install aws-sdk && npm install executive && npm install s3-node-client'
+sudo -H -u ec2-user bash -c 'npm install xmlhttprequest && npm install aws-sdk && npm install executive && npm install s3-node-client && npm install copy-dynamodb-table'
 
 #Install S3fs
 sudo git clone https://github.com/s3fs-fuse/s3fs-fuse
@@ -62,10 +62,10 @@ sudo update-motd
 #Set Up Variables
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 EC2_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/\(.*\)[a-z]/\1/')
-ROOT_VOL=$(aws ec2 describe-instance-attribute --instance-id $INSTANCE_ID \
---attribute blockDeviceMapping --region $EC2_REGION | awk '/vol-*/ {print $2}' \
-| tr -d '",')
-echo $ROOT_VOL > /home/ec2-user/rootVol
+#ROOT_VOL=$(aws ec2 describe-instance-attribute --instance-id $INSTANCE_ID \
+#--attribute blockDeviceMapping --region $EC2_REGION | awk '/vol-*/ {print $2}' \
+#| tr -d '",')
+#echo $ROOT_VOL > /home/ec2-user/rootVol
 
 #Setup awslogs
 #Add S3 Sync Logs

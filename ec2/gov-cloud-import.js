@@ -137,7 +137,7 @@ function findLetter(volumeId){
         };
         ec2.describeInstances(paramsInst, function(err, data) {
             if (err) {
-                console.log(err, err.stack); // an error occurred
+                writeToLog(err, err.stack); // an error occurred
             } else {
                 //Construct an array of mounted drives so when know which letter to use for mounting
                 const instanceId = data.Reservations[0].Instances[0].InstanceId;
@@ -236,7 +236,7 @@ function removeHeartbeat(array, element) {
     if (index !== -1) {
         array.splice(index, 1);
     }
-    writeToLog("Heartbeat removed"), 'log';
+    writeToLog("Heartbeat removed", 'log');
 }
 
 //Construct each Heartbeat
@@ -248,7 +248,7 @@ function heartbeatFunc(taskToken){
     };
     stepfunctions.sendTaskHeartbeat(paramsHeartbeat, function(err, data) {
       if (err) {
-          writeToLog(JSON.stringify(err));
+          writeToLog(JSON.stringify(err), 'log');
           if (err.code == "TaskTimedOut"){
               removeHeartbeat(heartbeat, taskToken);
           }
@@ -402,10 +402,9 @@ function sendTaskSuccess(taskToken){
 //Mount Buckets via s3fs shell script
 function mountBucket(bucket){
     return new Promise((resolve, reject) => {
-      console.log(bucket);
         exec('./shell/mountBucket.sh -b '+ bucket, (err, stdout, stderr) => {
           if (stdout.startsWith("success")) {
-             writeToLog(stdout, 'log')
+             writeToLog(stdout+' '+bucket, 'log')
              resolve("success");
           } else {
              resolve('fail');
@@ -581,7 +580,8 @@ async function syncS3(){
             heartbeat.push(taskData.taskToken);
             //EventEmitters
             uploader.on('error', function(err) {
-                writeToLog("unable to sync: "+err);
+                writeToLog("unable to sync: "+err, 'log');
+                removeHeartbeat(heartbeat, taskData.taskToken);
                 umountBucket(taskData.sourceBucket);
                 sendTaskFailure(taskData.taskToken);
             });
