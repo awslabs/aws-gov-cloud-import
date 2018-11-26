@@ -27,7 +27,7 @@ function getGovCloudRegion(){
             govRegion = 'us-gov-west-1';
             resolve(govRegion);
         } else if (region == 'us-east-2'){
-            govRegion = 'us-gov-west-1';
+            govRegion = 'us-gov-east-1';
             resolve(govRegion);
         }
     });
@@ -105,7 +105,7 @@ exports.handler = (event, context, callback) => {
             //Publish to SNS
             console.log(msg);
             return publish(msg, event.topic, event.arn);
-        })        
+        })
         .then(function(){
             callback(null, msg);
         })
