@@ -49,10 +49,11 @@ function findEC2PrepScript() {
                 console.log(err);
                 reject(err);
             } else {
-                let url = 'https://s3.'+region+'.amazonaws.com/'+data.Parameter.Value+'/ec2/gov-cloud-import-ec2prep.sh'
+                //let url = 'https://s3.'+region+'.amazonaws.com/'+data.Parameter.Value+'/ec2/gov-cloud-import-ec2prep.sh'
+                let s3 = 's3://'+data.Parameter.Value+'/ec2/gov-cloud-import-ec2prep.sh';
                 let userData=
                     `#!/bin/bash
-                    wget ${url}
+                    aws s3 cp ${s3} ./
                     chmod +x gov-cloud-import-ec2prep.sh
                     ./gov-cloud-import-ec2prep.sh
                     `;
