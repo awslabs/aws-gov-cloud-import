@@ -25,7 +25,7 @@ function getGovCloudRegion(){
             govRegion = 'us-gov-west-1';
             resolve(govRegion);
         } else if (region == 'us-east-2'){
-            govRegion = 'us-gov-west-1';
+            govRegion = 'us-gov-east-1';
             resolve(govRegion);
         }
     });
