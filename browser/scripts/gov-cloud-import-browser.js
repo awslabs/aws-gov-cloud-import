@@ -471,7 +471,7 @@ function setRegionAndKeys(){
         if (config.govRegion == 'us-gov-west-1') {
             config.comRegion = 'us-west-2';
         } else if (config.govRegion == 'us-gov-east-1'){
-            config.govRegion = 'us-west-2';//Until GovCloud East its made
+            config.govRegion = 'us-east-2';//Until GovCloud East its made
         }
         //API Keys from the form
         config.comAccess = document.getElementById("comAccess").value;
