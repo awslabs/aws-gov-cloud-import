@@ -467,12 +467,20 @@ function setRegionAndKeys(){
     return new Promise((resolve, reject) => {
         let config = {};
         //Find GovCloud Region then find adjacent Region
-        config.govRegion = 'us-gov-west-1'//document.getElementById("govRegion").value;
+        //config.govRegion = 'us-gov-west-1'
+
+        config.govRegion = document.getElementById("govRegion").value;
+        console.log(config.govRegion+' Before')
+        if (config.govRegion != 'us-gov-west-1' && config.govRegion != 'us-gov-east-1'){
+            config.govRegion = 'us-gov-west-1';
+            console.log(config.govRegion+' During')
+        }
         if (config.govRegion == 'us-gov-west-1') {
             config.comRegion = 'us-west-2';
         } else if (config.govRegion == 'us-gov-east-1'){
-            config.govRegion = 'us-east-2';//Until GovCloud East its made
+            config.comRegion = 'us-east-2';//Until GovCloud East its made
         }
+        console.log(config.comRegion+' After')
         //API Keys from the form
         config.comAccess = document.getElementById("comAccess").value;
         config.comSecret = document.getElementById("comSecret").value;
