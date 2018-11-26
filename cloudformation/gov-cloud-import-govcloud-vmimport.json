@@ -1,0 +1,71 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Deploys VMImport Role for gov-cloud-import in GovCloud",
+
+  "Resources" : {
+    "Role" : {
+      "Type" : "AWS::IAM::Role",
+      "Properties" : {
+        "RoleName" : "vmimport",
+        "AssumeRolePolicyDocument" : {
+          "Version" : "2012-10-17",
+          "Statement" : [
+            {
+              "Effect" : "Allow",
+              "Principal" : {
+                "Service" : "vmie.amazonaws.com"
+              },
+              "Action" : "sts:AssumeRole",
+              "Condition" : {
+                "StringEquals" : {
+                  "sts:Externalid" : "vmimport"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "RolePolicies" : {
+      "Type" : "AWS::IAM::Policy",
+      "Properties" : {
+        "PolicyName" : "gov-cloud-vmimport-policy",
+        "PolicyDocument" : {
+            "Statement": [
+                {
+                    "Action": [
+                        "s3:*"
+                    ],
+                    "Resource": [
+                        "arn:aws-us-gov:s3:::gov-cloud-import-bucket-*"
+                    ],
+                    "Effect": "Allow"
+                },
+                {
+                    "Action": [
+                        "s3:*"
+                    ],
+                    "Resource": [
+                        "arn:aws-us-gov:s3:::gov-cloud-import-bucket-*/*"
+                    ],
+                    "Effect": "Allow"
+                },
+                {
+                    "Action": [
+                        "ec2:ModifySnapshotAttribute",
+                        "ec2:CopySnapshot",
+                        "ec2:RegisterImage",
+                        "ec2:Describe*",
+                        "ec2:FullAccess"
+                    ],
+                    "Resource": "*",
+                    "Effect": "Allow"
+                }
+            ]
+        },
+        "Roles" : [ { "Ref" : "Role" } ]
+      }
+    }
+  }
+}

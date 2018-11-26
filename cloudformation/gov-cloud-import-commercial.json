@@ -1,18 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "gov-cloud-import CloudFormation Template for AWS",
-    "Parameters" : {
-
-      "SSHLocation" : {
-        "Description" : " The IP address range that can be used to SSH to the EC2 instances",
-        "Type": "String",
-        "MinLength": "9",
-        "MaxLength": "18",
-        "Default": "0.0.0.0/0",
-        "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
-        "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
-      }
-    },
     "Mappings" : {
       "RegionMap" : {
         "us-east-2"      : { "bucket" : "<BUCKET_BASE>"},
@@ -654,39 +642,48 @@
               "Properties": {
                   "PolicyName": "gov-cloud-import-ec2-policy",
                   "PolicyDocument": {
-                      "Version": "2012-10-17",
-                      "Statement": {
-                          "Effect": "Allow",
-                          "Action": [
-                              "ec2:AttachVolume",
-                              "ec2:DetachVolume",
-                              "ec2:StopInstances",
-                              "ec2:createTags",
-                              "ec2:DeleteVolume",
-                              "ec2:DescribeInstanceAttribute",
-                              "ec2:DescribeInstances",
-                              "ec2:terminateInstances",                              
-                              "logs:DescribeLogStreams",
-                              "ssm:GetParameters",
-                              "ssm:GetParameter",
-                              "logs:CreateLogGroup",
-                              "logs:PutLogEvents",
-                              "logs:CreateLogStream",
-                              "states:SendTaskSuccess",
-                              "states:SendTaskFailure",
-                              "states:SendTaskHeartbeat",
-                              "states:GetActivityTask",
-                              "sts:GetCallerIdentity"
-                          ],
-                          "Resource": "*"
-                      }
-                  },
-                  "Roles": [
-                      {
-                          "Ref": "ec2role"
-                      }
-                  ]
-              }
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "ec2:DetachVolume",
+                                    "ec2:AttachVolume",
+                                    "ec2:DescribeInstances",
+                                    "ec2:TerminateInstances",
+                                    "ec2:CreateTags",
+                                    "ec2:DescribeInstanceAttribute",
+                                    "logs:DescribeLogStreams",
+                                    "ssm:GetParameters",
+                                    "ec2:StopInstances",
+                                    "logs:CreateLogGroup",
+                                    "logs:PutLogEvents",
+                                    "ssm:GetParameter",
+                                    "states:SendTaskSuccess",
+                                    "ec2:DeleteVolume",
+                                    "logs:CreateLogStream",
+                                    "states:SendTaskFailure",
+                                    "s3:ListAllMyBuckets",
+                                    "sts:GetCallerIdentity",
+                                    "s3:HeadBucket",
+                                    "s3:ListObjects",
+                                    "states:SendTaskHeartbeat",
+                                    "states:GetActivityTask"
+                                ],
+                                "Resource": "*"
+                            },
+                            {
+                                "Effect": "Allow",
+                                "Action": "s3:*",
+                                "Resource": [
+                                    "arn:aws:s3:::<BUCKET_BASE>",
+                                    "arn:aws:s3:::<BUCKET_BASE>/*"
+                                ]
+                            }
+                        ]
+                    },
+                  "Roles": [ { "Ref": "ec2role" } ]
+                }
           },
           "ec2Profile": {
               "Type": "AWS::IAM::InstanceProfile",
@@ -729,5 +726,5 @@
                 "TopicName" : "gov-cloud-import-s3"
              }
           }
-      },
+    }
 }

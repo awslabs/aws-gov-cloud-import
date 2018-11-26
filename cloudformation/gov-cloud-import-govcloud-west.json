@@ -1,0 +1,78 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Deploys Resources for gov-cloud-import in GovCloud",
+
+  "Resources" : {
+    "User" : {
+      "Type" : "AWS::IAM::User",
+      "Properties" : {
+        "UserName" : "gov-cloud-import-user-west"
+      }
+    },
+    "UserPolicies" : {
+      "Type" : "AWS::IAM::Policy",
+      "Properties" : {
+        "PolicyName" : "gov-cloud-import-user-west-policy",
+        "PolicyDocument" : {
+          "Statement": [
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "s3:*"
+                  ],
+                  "Resource":  [
+                    {
+                      "Fn::Join": ["", ["arn:aws-us-gov:s3:::",{"Ref": "Bucket"}]]
+                    }
+                  ]
+              },
+              {
+                "Effect": "Allow",
+                  "Action": [
+                      "s3:*"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Join": ["", ["arn:aws-us-gov:s3:::",{"Ref": "Bucket"},"/*"]]
+                    }
+                  ]
+              },
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "cloudformation:DescribeStacks",
+                      "ec2:DescribeImportImageTasks",
+                      "ec2:ImportImage",
+                      "ec2:RegisterImage",
+                      "ec2:DescribeImportSnapshotTasks",
+                      "ec2:ImportSnapshot",
+                      "s3:ListAllMyBuckets",
+                      "s3:HeadBucket",
+                      "s3:ListObjects"
+                  ],
+                  "Resource": "*"
+              }
+          ]
+        },
+        "Users" : [ { "Ref" : "User" } ]
+      }
+    },
+    "Bucket": {
+        "Type": "AWS::S3::Bucket",
+        "Properties": {
+            "AccessControl": "BucketOwnerFullControl"
+        }
+    }
+  },
+  "Outputs" : {
+    "NewUser" : {
+      "Value" : { "Ref" : "User" },
+      "Description" : "Id of new user"
+    },
+    "Bucket": {
+        "Value": { "Ref" : "Bucket" },
+        "Description": "S3 Bucket for Importing Images"
+    }
+  }
+}
