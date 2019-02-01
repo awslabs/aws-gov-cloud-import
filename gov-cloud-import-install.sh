@@ -154,8 +154,8 @@ if [ "$GOV_STATUS" != "" ] || [ "$COM_STATUS" != "" ] || [ "$ROLE_STATUS" != "" 
   echo ""
   echo "$GOV_REGION status: $GOV_STATUS"
   echo "$COM_REGION status: $COM_STATUS"
-  echo "VMImport Role status: $ROLE_STATUS"
-  sleep 5
+  echo "VMImport Role status: Exists"
+  exit
 else
   echo ""
   echo "No Cloudformation detected in $GOV_REGION or $COM_REGION."
@@ -289,8 +289,8 @@ echo "Creating AWS GovCloud (US) Access Keys and Storing them in AWS SSM Paramet
 CREATE_KEYS=$(aws iam create-access-key --user-name gov-cloud-import-user-$CARD_DIR --profile gov12345)
 ACCESS_KEY=$(echo $CREATE_KEYS | awk '{print $2}')
 SECRET_KEY=$(echo $CREATE_KEYS | awk '{print $4}')
-GOV_BUCKET=$(aws cloudformation describe-stacks --stack-name gov-cloud-import --profile gov12345 | awk '/gov-cloud-import-bucket*/ {print $2}' | tr -d '"')
-
+GOV_BUCKET=$(aws cloudformation describe-stacks --stack-name gov-cloud-import --profile gov12345 | awk '/gov-cloud-import-bucket*/ {print $8}')
+echo $GOV_BUCKET
 #Submit Parameters to AWS
 aws ssm put-parameter --name "gov-cloud-import-accessKey" --overwrite  --type "SecureString" --value $ACCESS_KEY --profile com12345 > /dev/null
 aws ssm put-parameter --name "gov-cloud-import-secretKey"  --overwrite --type "SecureString" --value $SECRET_KEY --profile com12345 > /dev/null
