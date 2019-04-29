@@ -139,7 +139,7 @@ COM_STATUS=$(aws cloudformation describe-stacks --stack-name gov-cloud-import --
 GOV_STATUS=$(aws cloudformation describe-stacks --stack-name gov-cloud-import --profile gov12345 2> null | awk 'NF>1{print $NF}' | head -n 1)
 ROLE_STATUS=$(aws iam get-role --role-name vmimport --profile gov12345 2> null | awk '/vmie.amazonaws.com/ {print $2}')
 
-if [ "$GOV_STATUS" != "" ] || [ "$COM_STATUS" != "" ] || [ "$ROLE_STATUS" != "" ]; then
+if [ "$GOV_STATUS" != "" ] || [ "$COM_STATUS" != "" ]; then
   if [[ -z ${GOV_STATUS} ]]; then
       GOV_STATUS="Does not exist"
   fi
@@ -154,11 +154,12 @@ if [ "$GOV_STATUS" != "" ] || [ "$COM_STATUS" != "" ] || [ "$ROLE_STATUS" != "" 
   echo ""
   echo "$GOV_REGION status: $GOV_STATUS"
   echo "$COM_REGION status: $COM_STATUS"
-  echo "VMImport Role status: Exists"
+  echo "VMImport Role status: $ROLE_STATUS"
   exit
 else
   echo ""
   echo "No Cloudformation detected in $GOV_REGION or $COM_REGION."
+  echo "VMImport Role status: $ROLE_STATUS"
   sleep 5
 fi
 
