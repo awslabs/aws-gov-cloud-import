@@ -3,8 +3,8 @@
     "Description": "gov-cloud-import CloudFormation Template for AWS",
     "Mappings" : {
       "RegionMap" : {
-        "us-east-2"      : { "bucket" : "gov-cloud-import-76lu94wzboa2timd"},
-        "us-west-2"      : { "bucket" : "gov-cloud-import-76lu94wzboa2timd"}
+        "us-east-2"      : { "bucket" : "<BUCKET_BASE>"},
+        "us-west-2"      : { "bucket" : "<BUCKET_BASE>"}
       }
     },
     "Resources": {
@@ -676,8 +676,8 @@
                                 "Effect": "Allow",
                                 "Action": "s3:*",
                                 "Resource": [
-                                    "arn:aws:s3:::gov-cloud-import-76lu94wzboa2timd",
-                                    "arn:aws:s3:::gov-cloud-import-76lu94wzboa2timd/*"
+                                    "arn:aws:s3:::<BUCKET_BASE>",
+                                    "arn:aws:s3:::<BUCKET_BASE>/*"
                                 ]
                             }
                         ]
