@@ -173,6 +173,7 @@ echo "Starting gov-cloud-import deployment to $GOV_REGION and $COM_REGION."
 echo ""
 echo ""
 echo "Making S3 Bucket in $COM_REGION"
+echo "This is PUBLICALLY EXPOSED to allow access to Web Interface"
 echo ""
 #Make Bucket
 RAND=$(openssl rand -base64 100 | tr -dc 'a-z0-9' | fold -w 16 | head -n 1)
