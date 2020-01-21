@@ -81,38 +81,38 @@
 			Table of Contents:<br>
 
 			<a href="#">Installation</a><br>
-			<a href="#">Programatic Interface(API)</a><br>
+			<a href="#">Programmatic Interface (API)</a><br>
 			<a href="#">gov-cloud-import-image</a><br>
 			<a href="#">gov-cloud-import-s3</a><br>
 			<br>
 			<h1>Install/Uninstall/Caveats</h1>
 			<h3>Install</h3>
 			Please verify: Any previous installs have been removed & vmimport role has been removed from AWS GovCloud (US).<br>
-			Launch a small ec2 instance and run this <a href="#">install script</a>.  Admin API Keys are needed for <br>
-			AWS and AWS GovCloud (US).  The script will output a URL for app UI. Please read through all documentation<br>
+			Launch a small ec2 instance and run this <a href="#">install script</a>. Admin API Keys are needed for <br>
+			AWS and AWS GovCloud (US). The script will output a URL for app UI. Please read through all documentation<br>
 			prior to installation.<br>
 
 			<h3>Uninstall</h3>
-			Please verify:  Any objects that are left in S3 AWS GovCloud (US) and AWS Buckets are removed.  Once verified,<br>
-			proceed to the install/remove page.  You need Admin API Keys for AWS and AWS GovCloud (US).  All is removed but<br>
-			the cloudwatch logs.
+			Please verify: Any objects that are left in S3 AWS GovCloud (US) and AWS Buckets are removed. Once verified,<br>
+			proceed to the install/remove page. You need Admin API Keys for AWS and AWS GovCloud (US). All is removed but<br>
+			the CloudWatch logs.
 
 			<!--<h3>Workflow</h3>
-			Once installed, the import image needs an AMI/Snapshot ID that belongs to the account.  The API keys<br>
-			used to import only need Lambda invoking privleges in AWS.  Next, Give the region in which the<br>
+			Once installed, the import image needs an AMI/Snapshot ID that belongs to the account. The API keys<br>
+			used to import only need Lambda invoking privleges in AWS. Next, Give the region in which the<br>
 			image is sourced. The AWS GovCloud (US) Region is the destination of the source AMI/Snapshot. Once Submitted,<br>
-			the appwill return an error or the execution ARN for StepFunctions.  Watch the Step Function Exection<br>
+			the appwill return an error or the execution ARN for StepFunctions. Watch the Step Function Exection<br>
 			in the AWS Console to view progress.-->
 			<h3>Caveats: </h3>
 			<p>
 				1. Install fails if vmimport role exists or leftovers from previous install.<br>
-				2. Uninstall fails if S3 bucket objects exist or additional .<br>
-				3. Window images loose .pem login functionality(not linux in tests).  Make sure creds set.<br>
-				4. No images over 100GiB(Tested up to this size).<br>
-				5. S3 Import is meant for 1TiB or less.
+				2. Uninstall fails if S3 bucket objects exist.<br>
+				3. Window images loose .pem login functionality (not Linux in tests). Make sure creds set.<br>
+				4. No images over 100GiB (tested up to this size).<br>
+				5. S3 Import is meant for 1TiB or less.<br>
 				6. S3 Import fails without giving specific S3 Bucket permissions to AWS role or AWS GovCloud (US) user.
 			</p>
-			<h3>Programatic Interface(API): </h3>
+			<h3>Programmatic Interface (API): </h3>
 			<p>
 				While this is not a full API, it will allow you to make gov-cloud-import available to your applications.<br>
 				Below are sample AWS SDK Javascript calls that show how to initiate an import.<br>
@@ -121,19 +121,19 @@
 				<h4>For gov-cloud-import-s3</h4>
 				<object width="650" height="370" data="./browser/importS3.js"></object>
 			</p>
-			<h3>Cloudformation</h3>
+			<h3>CloudFormation</h3>
 			<p>
 			<h4>Code:</h4>
 			<a href="./cloudformation/gov-cloud-import-AWS.json">AWS Template</a><br>
 			<a href="./cloudformation/gov-cloud-import-AWS GovCloud (US).json">AWS GovCloud (US) Template</a><br>
 			<h4>Overview</h4>
-			We have a CloudFormation for AWS and AWS GovCloud (US).  The installation script deploys these formations<br>
+			We have a CloudFormation for AWS and AWS GovCloud (US). The installation script deploys these formations<br>
 			Below should help reference what is being built by the templates.<br><br>
 			For AWS:<br><br>
 			<img src="./browser/images/commercial-resources.png" width="680"><br><br>
 			For AWS GovCloud (US):<br><br>
 			<img src="./browser/images/govcloud-resources.png" width="680"><br><br>
-			After depolyed, you then have the ability to transfer AMI/Snapshots via the import images and S3 buckets via Import S3.<br>
+			After deployed, you then have the ability to transfer AMI/Snapshots via the import images and S3 buckets via Import S3.<br>
 			<br>
 			</p>
 			<h1>Solution: gov-cloud-import-image</h1>
@@ -157,10 +157,10 @@
 			<h3>Component: AWS EC2 SSM</h3>
 			<p>
 			<h4>Overview</h4>
-			There is no script specific to SSM.  The unencrypted values are sent from the AWS CloudFormation.  CloudFormation<br>
-			doesn't support storing encrypted outputs nor sending encrypted parameters to SSM.  Since we have AWS GovCloud (US) API Keys, its<br>
-			important to mention this tool uses specific lambda functions store them encrypted.  The other key stored securely is the KeyPair<br>
-			for the EC2 Worker.  This is so if we need to troubleshoot, we have access(you'll also have to change Security Group).<br>
+			There is no script specific to SSM. The unencrypted values are sent from the AWS CloudFormation. CloudFormation<br>
+			doesn't support storing encrypted outputs nor sending encrypted parameters to SSM. Since we have AWS GovCloud (US) API Keys, its<br>
+			important to mention this tool uses specific lambda functions store them encrypted. The other key stored securely is the KeyPair<br>
+			for the EC2 Worker. This is so if we need to troubleshoot, we have access (you'll also have to change Security Group).<br>
 			All values are deleted upon uninstall.<br>
 			<img src="./browser/images/ssm.png" width="680"><br><br>
 			</p>
@@ -170,9 +170,9 @@
 			<h4>Code:</h4>
 			<a href="./browser/StepFunctions.json">StepFunction JSON</a><br>
 			<h4>Overview</h4>
-			The Step Functions drives the worflow of gov-cloud-import.  Kicked off via initStepFunction Lambda,<br>
-			Step Functions is passed the parameters from the browser.  Each step is either a Lambda Function,<br>
-			an EC2 Worker, or a wait event pending a status.  This script is encoded inside the AWS CloudFormation<br>
+			The Step Functions drives the workflow of gov-cloud-import. Kicked off via initStepFunction Lambda,<br>
+			Step Functions is passed the parameters from the browser. Each step is either a Lambda Function,<br>
+			an EC2 Worker, or a wait event pending a status. This script is encoded inside the AWS CloudFormation<br>
 			Template.
 			</p>
 			<h3>Component: AWS Lambda</h3>
@@ -191,8 +191,8 @@
 			<a href="./lambda/snsPublish.zip">snsPublish</a><br>
 			<a href="./lambda/snsSubscribe.zip">snsSubscribe</a><br>
 			<h4>Overview</h4>
-			Lambda performs tasks on the infrastructure necessary for the EC2 worker's copy.  It follows up with an API call<br>
-			to AWS GovCloud (US) for issuing an EC2 ImportImage call and watches the import status.  Upon completion, the last Lambda<br>
+			Lambda performs tasks on the infrastructure necessary for the EC2 worker's copy. It follows up with an API call<br>
+			to AWS GovCloud (US) for issuing an EC2 ImportImage call and watches the import status. Upon completion, the last Lambda<br>
 			removes the RAW image from AWS GovCloud (US) S3.
 			</p>
 			<h3>Component: AWS EC2 worker</h3>
@@ -201,22 +201,22 @@
 			<a href="./ec2/gov-cloud-import.js">JS Script</a><br>
 			<a href="./ec2/gov-cloud-import-ec2prep.sh">Shell Script</a><br>
 			<h4>Overview</h4>
-			EC2 is used as its the only service that can attach a volume.  Nothing is stored on the EC2 but the scripts themselves.<br>
-			The EC2 runInstance/startInstance is managed by Lambda.  It does a createKeyPair and stores the private key in SSM.<br>
-			This will allow you to get into the instance if needed.  It deploys it into the VPC with an Egress only Security Group.<br>
-			Lambda checks its status again before issuing an Activity in StepFunctions.  The shell script bootstraps the image.<br>
-			Once running, it polls the StepFunction Activity.  An activity will have the volumeId(along with other params)<br>
-			It attaches the drive, copies to AWS GovCloud (US) S3 and sends heartbeats to StepFunction.  It can copy as many drives<br>
-			as EC2 allows attached.  An instance size of m5.4xlarge is used.  2 hour after the last copy finishes, the EC2<br>
-			will stop itself until lambda starts it again.  When stopping, it detaches and deletes any orphaned volumes from<br>
+			EC2 is used as its the only service that can attach a volume. Nothing is stored on the EC2 but the scripts themselves.<br>
+			The EC2 runInstance/startInstance is managed by Lambda. It does a createKeyPair and stores the private key in SSM.<br>
+			This will allow you to get into the instance if needed. It deploys it into the VPC with an Egress only Security Group.<br>
+			Lambda checks its status again before issuing an Activity in StepFunctions. The shell script bootstraps the image.<br>
+			Once running, it polls the StepFunction Activity. An activity will have the volumeId (along with other params)<br>
+			It attaches the drive, copies to AWS GovCloud (US) S3 and sends heartbeats to StepFunction. It can copy as many drives<br>
+			as EC2 allows attached. An instance size of m5.4xlarge is used. 2 hour after the last copy finishes, the EC2<br>
+			will stop itself until lambda starts it again. When stopping, it detaches and deletes any orphaned volumes from<br>
 			failed attempts.<br>
 			</p>
 			<h3>Component: AWS GovCloud (US) VM Import/Export</h3>
 			<p>
 			<h4>Code:</h4>
 			<h4>Overview</h4>
-			VM Import is used on the RAW image transfered from the EC2 worker into AWS GovCloud (US) S3.  The requires a<br>
-			an S3 Bucket and a role with proper permissions.  If successful, the RAW image transformed into AMI.<br>
+			VM Import is used on the RAW image transferred from the EC2 worker into AWS GovCloud (US) S3. The requires a<br>
+			an S3 Bucket and a role with proper permissions. If successful, the RAW image transformed into AMI.<br>
 			<a href=""></a>
 			</p>
 			<h1>Solution: gov-cloud-import-s3</h1>
@@ -240,8 +240,8 @@
 			<a href="./lambda/snsPublish.zip">snsPublish</a><br>
 			<a href="./lambda/snsSubscribe.zip">snsSubscribe</a><br>
 			<h4>Overview</h4>
-			Lambda performs tasks on the infrastructure necessary for the EC2 worker's copy.  It follows up with an API call<br>
-			to AWS GovCloud (US) for issuing an EC2 ImportImage call and watches the import status.  Upon completion, the last Lambda<br>
+			Lambda performs tasks on the infrastructure necessary for the EC2 worker's copy. It follows up with an API call<br>
+			to AWS GovCloud (US) for issuing an EC2 ImportImage call and watches the import status. Upon completion, the last Lambda<br>
 			removes the RAW image from AWS GovCloud (US) S3.
 			</p>
 			<h3>Component: AWS EC2 worker</h3>
@@ -251,12 +251,12 @@
 			<a href="./ec2/gov-cloud-import-ec2prep.sh">Shell Script</a><br>
 
 			<h4>Overview</h4>
-			This is the same EC2 worker as gov-cloud-import-image. The asynchronus nature allows it handle multiple copies well.<br>
-			File Synchronization allows you to only copy the files you that have changed rather copying all files.  To do this<br>
-			we build a table prior to copying that allows us to know what to update.  gov-cloud-import-s3 will run a MD5 hash<br>
-			on the files in AWS and compare them to the eTag of the Object(s) in AWS GovCloud (US).  Commerical is mounted via<br>
-			s3fs and access via the NodeJS fs.  AWS Logs produces Cloudwatch sync log showing when each file is started and<br>
-			finished copying along with filepaths.  The bucket is unmounted and mountpoint deleted upon completion.<br>
+			This is the same EC2 worker as gov-cloud-import-image. The asynchronous nature allows it handle multiple copies well.<br>
+			File Synchronization allows you to only copy the files you that have changed rather copying all files. To do this<br>
+			we build a table prior to copying that allows us to know what to update. gov-cloud-import-s3 will run a MD5 hash<br>
+			on the files in AWS and compare them to the eTag of the Object(s) in AWS GovCloud (US). Commercial is mounted via<br>
+			s3fs and access via the NodeJS fs. AWS Logs produces CloudWatch sync log showing when each file is started and<br>
+			finished copying along with file paths. The bucket is unmounted and mountpoint deleted upon completion.<br>
 			</p>
 			<h3>Troubleshooting: </h3>
 			<p>
@@ -273,7 +273,7 @@
 	<!-- Sync Docs Docs Page -->
   <div data-role="page" data-theme="a" id="syncDocs">
     <div data-role="header" data-position="inline" data-add-back-btn="true">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 			<a href="#panel" class="ui-btn-right ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-right ui-icon-bars">Menu</a>
     </div>
     <div data-role="content" data-theme="a">
@@ -403,7 +403,7 @@
 	<!-- Notifications Page -->
 	<div data-role="page" data-theme="a" id="notify">
 		<div data-role="header" data-position="inline" data-add-back-btn="true">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 			<a href="#panel" class="ui-btn-right ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-right ui-icon-bars">Menu</a>
 		</div>
 		<div data-role="content" data-theme="a">
@@ -448,7 +448,7 @@
 	<!-- Import Page -->
   <div data-role="page" data-theme="a" id="import">
     <div data-role="header" data-position="inline" data-add-back-btn="true">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 			<a href="#panel" class="ui-btn-right ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-right ui-icon-bars">Menu</a>
     </div>
     <div data-role="content" data-theme="a">
@@ -492,12 +492,12 @@
 	<!-- S3 Sync Page -->
   <div data-role="page" data-theme="a" id="s3sync">
     <div data-role="header" data-position="inline" data-add-back-btn="true">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 			<a href="#panel" class="ui-btn-right ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-right ui-icon-bars">Menu</a>
     </div>
     <div data-role="content" data-theme="a">
 			<fieldset class="ui-grid-a">
-				  Please give the User/Role the bucket permissions for the task.  They sync is recursive unless specifying an object.<br>
+				  Please give the User/Role the bucket permissions for the task. They sync is recursive unless specifying an object.<br>
 					The Destination will be an exact replica of the Source when finished. <br><br>
 
 					<div class="ui-block-a">
@@ -541,7 +541,7 @@
 	<!-- Status Page -->
   <div data-role="page" data-theme="a" id="status">
     <div data-role="header" data-position="inline" data-add-back-btn="true">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 			<a href="#panel" class="ui-btn-right ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-right ui-icon-bars">Menu</a>
     </div>
     <div data-role="content" data-theme="a">
@@ -554,10 +554,10 @@
 	<!-- Key Verify Dialog -->
 	<div data-role="page" data-theme="a" id="verify">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
-			Currently the <a href="#account">API Keys</a> are missing or incomplete.  Please fill them out first.
+			Currently the <a href="#account">API Keys</a> are missing or incomplete. Please fill them out first.
 		</div>
 		<div data-role="footer" data-position="inline">
 			<h1><img src="./browser/images/govcloud.png" width="56"></h1>
@@ -567,10 +567,10 @@
 	<!-- No Verify Image Dialog -->
 	<div data-role="page" data-theme="a" id="noverify">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
-			The image id input does not match the proper format.  Please refer here for
+			The image id input does not match the proper format. Please refer here for
 			<a href='https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/walkthrough-custom-resources-lambda-lookup-amiids.html'>here</a> for finding AMI IDs
 			and <a href='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-describing-snapshots.html'>here</a> for Snapshots IDs.
 		</div>
@@ -582,7 +582,7 @@
 	<!-- No Verify SNS Dialog -->
 	<div data-role="page" data-theme="a" id="noverifySNS">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
 			Your input for SMS/Telephone or email was not a correct format. Please use the following formats:<br><br>
@@ -597,7 +597,7 @@
 	<!-- Verify Image Input Dialog -->
 	<div data-role="page" data-theme="a" id="verifyImageParams" data-role="dialog">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
 			Please review before submitting Job:
@@ -640,7 +640,7 @@
 	<!-- Verify S3 Input Dialog -->
 	<div data-role="page" data-theme="a" id="verifyS3Params" data-role="dialog">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
 			Please review before submitting Job:
@@ -675,7 +675,7 @@
 	<!-- Verify Uninstall Dialog -->
 	<div data-role="page" data-theme="a" id="verifyUninstall" data-role="dialog">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
 			Are you sure you want to Uninstall?
@@ -694,7 +694,7 @@
 	<!-- Verify Key Privs Dialog -->
 	<div data-role="page" data-theme="a" id="verifyPrivs">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
 			If you have any fail, please give the privelege to the keys before an import.
@@ -734,7 +734,7 @@
 	<!-- Validate Notify Dialog -->
 	<div data-role="page" data-theme="a" id="notifySubmit">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a">
 			<table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive">
@@ -777,7 +777,7 @@
 	<!-- Sample S3 Policy AWS Dialog -->
 	<div data-role="page" data-theme="a" id="comS3Policy">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a" class="a">
 			This is for AWS IAM Role: <b>gov-cloud-import-ec2role</b>
@@ -792,7 +792,7 @@
 	<!-- Sample S3 Policy AWS Dialog -->
 	<div data-role="page" data-theme="a" id="govS3Policy">
 		<div data-role="header" data-position="inline">
-			<h1><img src="./browser/images/aws.png"  width="66"> </h1>
+			<h1><img src="./browser/images/aws.png" width="66"> </h1>
 		</div>
 		<div data-role="content" data-theme="a" class="a">
 			This is for AWS GovCloud (US) IAM User: <b>gov-cloud-import-user</b>
