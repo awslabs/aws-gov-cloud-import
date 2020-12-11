@@ -207,7 +207,7 @@ aws ssm put-parameter --name "gov-cloud-import-app" --type "String" --value "gov
 echo "Copying App to S3 Bucket in $COM_REGION"
 echo ""
 #Sync the local repo clone to new s3 buckets
-aws s3 sync ./ s3://gov-cloud-import-$RAND --quiet  --profile com12345
+aws s3 sync ./ s3://gov-cloud-import-$RAND --quiet  --profile com12345 --exclude gov-cloud-import-install.sh
 
 #Update Scripts with New Bucket Location
 #BUCKET_BASE_URL="https://s3.$COM_REGION.amazonaws.com/gov-cloud-import-$RAND"
