@@ -236,7 +236,7 @@ cd ..
 echo ""
 echo "Synchronizing files to S3 bucket"
 #Sync Files to Bucket
-aws s3 sync ./ s3://gov-cloud-import-$RAND --profile com12345 --quiet
+aws s3 sync ./ s3://gov-cloud-import-$RAND --profile com12345 --quiet --exclude gov-cloud-import-install.sh
 
 echo "Deploying CloudFormations"
 #Start Cloudformation
