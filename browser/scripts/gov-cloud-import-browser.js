@@ -238,11 +238,10 @@ function watchGovCloudFormation(refreshIdGov, govCloudFormation, config){
     });
 }
 
-//Find Status function
-function findLambdaFunction(lambda, lambdaName){
+//Find Status function, updated to recurse multiple pages of results
+function findLambdaFunction(lambda, lambdaName, marker){
     return new Promise((resolve, reject) => {
-        //Params for Lambda invoke
-        let params = {};
+        let params = { Marker: marker };	
         // Call the Lambda function
         lambda.listFunctions(params, function(err, data) {
             if (err) {
@@ -253,9 +252,16 @@ function findLambdaFunction(lambda, lambdaName){
                     let str = data.Functions[index].FunctionName;
                     if(str.startsWith("gov-cloud-import-"+lambdaName)){
                         resolve(str);
-                    }
+                    }                
                 }
-                resolve("Not Installed");
+		        if (length === 50 & data.NextMarker !== "") {                    
+		            //Call recursivly until resolved
+	  	            findLambdaFunction(lambda, lambdaName, data.NextMarker).then( (lastResult) => {
+                        resolve(lastResult);
+                    });
+                } else {
+                	resolve("Not Installed");
+                }
             }
         });
     });
